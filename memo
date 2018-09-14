@@ -1,0 +1,28 @@
+snippet
+    <ul class="services-section">
+      <li class="trader-type">Investor Services</li>
+      <li><a href="//www.zacks.com/etfinvestor/">ETF Investor</a></li>
+      <li><a href="//www.zacks.com/homerun/?adid=TOP_ONLINE_NAV">Home Run Investor</a></li>
+      <li><a href="//www.zacks.com/incomeinvestor/">Income Investor</a></li>
+      <li><a href="//www.zacks.com/stocksunder10/">Stocks Under $10</a></li>
+      <li><a href="//www.zacks.com/valueinvestor/?adid=TOP_ONLINE_NAV">Value Investor</a></li>
+      <li><a href="//www.zacks.com/top-10-stocks.php">Top 10 Stocks</a></li>
+    </ul>
+    <ul class="services-section">
+      <li class="trader-type">Trading Services</li>
+      <li><a href="//www.zacks.com/blackboxtrader/">Black Box Trader</a></li>
+      <li><a href="//www.zacks.com/counterstrike/">Counterstrike</a></li>
+      <li><a href="//www.zacks.com/insidertrader/">Insider Trader</a></li>
+      <li><a href="//www.zacks.com/largecaptrader/">Large-Cap Trader</a></li>
+      <li><a href="//www.zacks.com/momentumtrader/">Momentum Trader</a></li>
+      <li><a href="//www.zacks.com/optionstrader/">Options Trader</a></li>
+      <li><a href="//www.zacks.com/shortlist/">Short List</a></li>
+      <li><a href="//www.zacks.com/surprisetrader/">Surprise Trader</a></li>
+      <li><a href="//www.zacks.com/tazr/">TAZR</a></li>
+    </ul>
+    <ul class="services-section">
+      <li class="trader-type">Innovators</li>
+      <li><a href="//www.zacks.com/blockchaininnovators/">Blockchain</a></li>
+      <li><a href="//www.zacks.com/healthcareinnovators/">Healthcare</a></li>
+      <li><a href="//www.zacks.com/technologyinnovators/">Technology</a></li>
+    </ul>
