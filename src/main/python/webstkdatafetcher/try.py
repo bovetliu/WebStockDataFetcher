@@ -1,4 +1,9 @@
 import mechanicalsoup
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.support import expected_conditions as EC
 from time import sleep
 from webstkdatafetcher import constants
 
@@ -107,6 +112,75 @@ def open_zacks_ultimate():
         browser.close()
 
 
+def get_propdict_file(path: str):
+    tbr = {}
+    with open(path) as credential_file:
+        for line in credential_file:
+            line = line.rstrip()
+            line_splits = line.split("=")
+            if len(line_splits) != 2:
+                raise ValueError(line + " could not split into key and value")
+            tbr[line_splits[0]] = line_splits[1]
+    return tbr
+
+
+def selenium_chrome():
+    chrome_option = webdriver.ChromeOptions()
+    # invokes headless setter
+    chrome_option.headless = False
+    driver = None
+    try:
+        driver = webdriver.Chrome(options=chrome_option, service_log_path=constants.chrome_log_path)
+        driver.get("https://www.zacks.com/ultimate/")
+        credentials = get_propdict_file(constants.credentials_path)
+        input_username = driver.find_element_by_css_selector("input#username.txtFld.log_value")
+        input_username.send_keys(credentials["username"])
+        input_password = driver.find_element_by_css_selector("input#password.txtFld.log_value")
+
+        input_password.send_keys(credentials["password"])
+        input_password.submit()
+        sleep(3)  # so page can be fully rendered
+        service_links = driver.find_elements_by_css_selector("#ts_sidebar section#zacks_services a")
+        service_dict = {}
+        for link in service_links:
+            if not link.get_attribute("textContent"):
+                raise ValueError("link.text should not be evaluated as false")
+            service_dict[link.get_attribute("textContent")] = link.get_attribute("href")
+            # print("link.get_attribute(\"textContent\"): {}, link href: {}".format(
+            #     link.get_attribute("textContent"), link.get_attribute("href")))
+        assert "Counterstrike" in service_dict
+        driver.get(service_dict["Counterstrike"])
+        trs = driver.find_elements_by_css_selector("table#port_sort tbody tr")
+        print("{}\t{}\t{}\t{}\t{}\t{}\t{}".format(
+            "sym", "%val", "date_added", "type", "price_added", "last_price", "change_percent"))
+        # click all Details of table to load js
+        for tr in trs:
+            # td in one line
+            tds = tr.find_elements_by_tag_name("td")
+            for td in tds:
+                if "Detail" in td.text:
+                    td.click()
+
+        trs = driver.find_elements_by_css_selector("table#port_sort tbody tr")
+        symbol_temp = ''
+        for tr in trs:
+            # td in one line
+            tds = tr.find_elements_by_tag_name("td")
+
+            if tds[1].text:
+                symbol_temp = tds[1].text
+            if "Detail" in tds[3].text:
+                continue
+            print("{}\t{}\t{}\t{}\t{}\t{}\t{}".format(
+                symbol_temp, tds[2].text, tds[3].text, tds[4].text, tds[5].text,
+                tds[6].text, tds[7].text))
+
+    finally:
+        if driver is not None:
+            driver.get("https://www.zacks.com/logout.php")
+            driver.close()
+
+
 if __name__ == "__main__":
     # execute only if run as a script
-    open_zacks_ultimate()
+    selenium_chrome()

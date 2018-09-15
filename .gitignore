@@ -1,6 +1,8 @@
 *.pyc
 */__pycache__/
 
+credentials
 .idea
 venv
 src/main/resources/credential.json
+src/test/resources/chrome.log
