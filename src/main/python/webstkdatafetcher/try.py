@@ -62,7 +62,8 @@ def selenium_chrome(output: str = None, clear_previous_content: bool = False):
     """
     chrome_option = webdriver.ChromeOptions()
     # invokes headless setter
-    chrome_option.headless = False
+    chrome_option.headless = True
+    chrome_option.add_argument("--window-size=1920x1080")
     driver = None
     output_file = None
     try:
@@ -90,10 +91,15 @@ def selenium_chrome(output: str = None, clear_previous_content: bool = False):
             service_name_vs_url[link.get_attribute("textContent").lower()] = link.get_attribute("href")
             print("{}, link href: {}".format(link.get_attribute("textContent"), link.get_attribute("href")))
 
-        interested_portfolios = ["Home Run Investor", "Income Investor", "Stocks Under $10",
-                                 "Value Investor", "Technology", "Large-Cap Trader",
-                                 "TAZR", "Momentum Trader", "Counterstrike", "Insider Trader",
-                                 "Black Box Trader"]
+        # interested_portfolios = ["Home Run Investor", "Income Investor", "Stocks Under $10",
+        #                          "Value Investor", "Technology", "Large-Cap Trader",
+        #                          "TAZR", "Momentum Trader", "Counterstrike", "Insider Trader",
+        #                          "Black Box Trader"]
+        interested_portfolios = [
+            "Home Run Investor", "Income Investor",
+            # "Stocks Under $10","Value Investor", "Technology",
+            # "Large-Cap Trader", "TAZR", "Momentum Trader", "Counterstrike", "Insider Trader", "Black Box Trader"
+        ]
         for int_port in interested_portfolios:
             assert int_port.lower() in service_name_vs_url, "\"" + int_port.lower() + "\" could not be found."
 
@@ -104,8 +110,10 @@ def selenium_chrome(output: str = None, clear_previous_content: bool = False):
             output_file.write(header + "\n")
 
         for int_port in interested_portfolios:
-            sleep(1)
+            # visit specified portfolio
+            print("now visiting url {}".format(service_name_vs_url[int_port.lower()]))
             driver.get(service_name_vs_url[int_port.lower()])
+            sleep(2)
             head_tr = driver.find_element_by_css_selector("table#port_sort thead tr")
             ths_of_header_row = head_tr.find_elements_by_tag_name("th")
             header_vs_col_idx = {}
@@ -113,12 +121,10 @@ def selenium_chrome(output: str = None, clear_previous_content: bool = False):
                 table_column_header_name = __table_header_name_remap(th.text)
                 header_vs_col_idx[table_column_header_name] = idx
 
-            # click all Details of table to load js
-            trs = driver.find_elements_by_css_selector("table#port_sort tbody tr")
-            for tr in trs:
+            # click all "Details>>" of addition, deletion and Open Portfolio tables to load js
+            for tr in driver.find_elements_by_css_selector("table.display tbody tr"):
                 # td in one line
-                tds = tr.find_elements_by_tag_name("td")
-                for td in tds:
+                for td in tr.find_elements_by_tag_name("td"):
                     if "Detail" in td.text:
                         td.click()
 
@@ -153,4 +159,4 @@ def selenium_chrome(output: str = None, clear_previous_content: bool = False):
 
 if __name__ == "__main__":
     # execute only if run as a script
-    selenium_chrome("../../../../data/record.txt", clear_previous_content=True)
+    selenium_chrome("../../../../data/record2.txt", clear_previous_content=True)
