@@ -1,11 +1,23 @@
 import mechanicalsoup
 from selenium import webdriver
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.common.keys import Keys
-from selenium.webdriver.support import expected_conditions as EC
+# from selenium.webdriver.common.by import By
+# from selenium.webdriver.support.ui import WebDriverWait
+# from selenium.webdriver.common.keys import Keys
+# from selenium.webdriver.support import expected_conditions as EC
 from time import sleep
 from webstkdatafetcher import constants
+
+
+__internal_header_mapping = {
+    "Company": "company",
+    "Sym": "symbol",
+    "%Val": "vol_percent",
+    "+Date": "date",
+    "$Add": "price",
+    "$Last": "last_price",
+    "%Chg": "change_percent",
+    "Type": "type"
+}
 
 
 def seach_in_duckduckgo():
@@ -23,95 +35,6 @@ def seach_in_duckduckgo():
         print(link.text, '->', link.attrs['href'])
 
 
-def open_zacks_ultimate():
-
-    browser = mechanicalsoup.StatefulBrowser(
-        soup_config={'features': 'lxml'},
-        raise_on_404=True,
-        user_agent=constants.user_agent,
-    )
-
-    ultimate_main_page = None
-    try:
-
-        browser.open("https://www.zacks.com/ultimate/")
-        sleep(1)
-        browser.select_form("#loginform")
-        browser['username'] = ""
-        browser['password'] = ""
-        resp = browser.submit_selected()
-        ultimate_main_page = browser.get_current_page()
-        # currently at https://www.zacks.com/ultimate/
-        '''
-        <section id="zacks_services">
-          <h1 class="arrow_down">Services</h1>
-          <div style="display: block;">
-            <h1 class="sub_nav_expand">Investor Services</h1>
-            <ul class="is_list" style="display: block;">
-              <li><a href="/investorcollection/">Investor Collection</a></li>
-              <li><a href="/etfinvestor/">ETF Investor</a></li>
-              <li><a href="/homerun/">Home Run Investor</a></li>
-              <li><a href="/incomeinvestor/">Income Investor</a></li>
-              <li><a href="/stocksunder10/">Stocks Under $10</a></li>
-              <li><a href="/valueinvestor/">Value Investor</a></li>
-              <li><a href="/top10/">Zacks Top 10</a></li>
-            </ul>
-            <h1 class="sub_nav_expand">Innovators</h1>
-            <ul style="display: block;">
-              <li><a href="/blockchaininnovators/">Blockchain</a></li>
-              <li><a href="/healthcareinnovators/">Healthcare</a></li>
-              <li><a href="/technologyinnovators/">Technology</a></li>
-            </ul>
-            <h1 class="sub_nav_expand">Other Services</h1>
-            <ul style="display: block;">
-              <li><a href="/confidential/">Zacks Confidential</a></li>
-              <li><a href="/premium/">Zacks Premium</a></li>
-            </ul>
-          </div>
-          <div style="display: block;">
-            <h1 class="sub_nav_expand">Trading Services</h1>
-            <ul style="display: block;">
-              <li><a href="/blackboxtrader/">Black Box Trader</a></li>
-              <li><a href="/counterstrike/">Counterstrike</a></li>
-              <li><a href="/insidertrader/">Insider Trader</a></li>
-              <li><a href="/largecaptrader/">Large-Cap Trader</a></li>
-              <li><a href="/momentumtrader/">Momentum Trader</a></li>
-              <li><a href="/optionstrader/">Options Trader</a></li>
-              <li><a href="/shortlist/">Short List</a></li>
-              <li><a href="/surprisetrader/">Surprise Trader</a></li>
-              <li><a href="/tazr/">TAZR</a></li>
-            </ul>
-          </div>
-        </section>
-        '''
-        zacks_services_section = ultimate_main_page.find("section", id="zacks_services")
-        links = zacks_services_section.find_all("a")
-        service_dict = {}
-        for link in links:
-            service_dict[link.string] = link
-            print(link)
-        browser.follow_link(service_dict["Counterstrike"])
-        counterstrike_page = browser.get_current_page()
-        trs = counterstrike_page.find("table", id="port_sort").tbody.find_all("tr")
-        print("{}\t{}\t{}\t{}\t{}\t{}\t{}".format(
-            "sym", "%val", "date_added", "type", "price_added", "last_price", "change_percent"))
-        for tr in trs:
-            tds = tr.contents
-
-            print("{}\t{}\t{}\t{}\t{}\t{}\t{}".format(
-                tds[1].string, tds[2].string, tds[3].string, tds[4].string, tds[5].string,
-                tds[6].string, tds[7].string))
-            if "Details" in tds[3].string:
-                print("the symbol has multiple")
-
-        sleep(3.0)
-    finally:
-        if ultimate_main_page is not None:
-            browser.follow_link(ultimate_main_page.find("a", id="logout"))
-            assert browser.select_form("form[name=loginform]") is not None
-        browser.close()
-
-
 def get_propdict_file(path: str):
     tbr = {}
     with open(path) as credential_file:
@@ -124,12 +47,31 @@ def get_propdict_file(path: str):
     return tbr
 
 
-def selenium_chrome():
+def __table_header_name_remap(header: str):
+    if header in __internal_header_mapping:
+        return __internal_header_mapping[header]
+    else:
+        return header.lower()
+
+
+def selenium_chrome(output: str = None, clear_previous_content: bool = False):
+    """
+
+    :param output: output path
+    :param clear_previous_content clear content if one file already exist at path specified in output
+    """
     chrome_option = webdriver.ChromeOptions()
     # invokes headless setter
     chrome_option.headless = False
     driver = None
+    output_file = None
     try:
+        if output:
+            output_file = open(output, 'w+')
+        if clear_previous_content and output_file is not None:
+            output_file.seek(0)
+            output_file.truncate()
+
         driver = webdriver.Chrome(options=chrome_option, service_log_path=constants.chrome_log_path)
         driver.get("https://www.zacks.com/ultimate/")
         credentials = get_propdict_file(constants.credentials_path)
@@ -141,46 +83,74 @@ def selenium_chrome():
         input_password.submit()
         sleep(3)  # so page can be fully rendered
         service_links = driver.find_elements_by_css_selector("#ts_sidebar section#zacks_services a")
-        service_dict = {}
+        service_name_vs_url = {}
         for link in service_links:
             if not link.get_attribute("textContent"):
                 raise ValueError("link.text should not be evaluated as false")
-            service_dict[link.get_attribute("textContent")] = link.get_attribute("href")
-            # print("link.get_attribute(\"textContent\"): {}, link href: {}".format(
-            #     link.get_attribute("textContent"), link.get_attribute("href")))
-        assert "Counterstrike" in service_dict
-        driver.get(service_dict["Counterstrike"])
-        trs = driver.find_elements_by_css_selector("table#port_sort tbody tr")
-        print("{}\t{}\t{}\t{}\t{}\t{}\t{}".format(
-            "sym", "%val", "date_added", "type", "price_added", "last_price", "change_percent"))
-        # click all Details of table to load js
-        for tr in trs:
-            # td in one line
-            tds = tr.find_elements_by_tag_name("td")
-            for td in tds:
-                if "Detail" in td.text:
-                    td.click()
+            service_name_vs_url[link.get_attribute("textContent").lower()] = link.get_attribute("href")
+            print("{}, link href: {}".format(link.get_attribute("textContent"), link.get_attribute("href")))
 
-        trs = driver.find_elements_by_css_selector("table#port_sort tbody tr")
-        symbol_temp = ''
-        for tr in trs:
-            # td in one line
-            tds = tr.find_elements_by_tag_name("td")
+        interested_portfolios = ["Home Run Investor", "Income Investor", "Stocks Under $10",
+                                 "Value Investor", "Technology", "Large-Cap Trader",
+                                 "TAZR", "Momentum Trader", "Counterstrike", "Insider Trader",
+                                 "Black Box Trader"]
+        for int_port in interested_portfolios:
+            assert int_port.lower() in service_name_vs_url, "\"" + int_port.lower() + "\" could not be found."
 
-            if tds[1].text:
-                symbol_temp = tds[1].text
-            if "Detail" in tds[3].text:
-                continue
-            print("{}\t{}\t{}\t{}\t{}\t{}\t{}".format(
-                symbol_temp, tds[2].text, tds[3].text, tds[4].text, tds[5].text,
-                tds[6].text, tds[7].text))
+        header = "{}\t{}\t{}\t{}\t{}\t{}".format(
+            "portfolio", "symbol", "vol_percent", "date", "type", "price")
+        print(header)
+        if output_file is not None:
+            output_file.write(header + "\n")
 
+        for int_port in interested_portfolios:
+            sleep(1)
+            driver.get(service_name_vs_url[int_port.lower()])
+            head_tr = driver.find_element_by_css_selector("table#port_sort thead tr")
+            ths_of_header_row = head_tr.find_elements_by_tag_name("th")
+            header_vs_col_idx = {}
+            for idx, th in enumerate(ths_of_header_row):
+                table_column_header_name = __table_header_name_remap(th.text)
+                header_vs_col_idx[table_column_header_name] = idx
+
+            # click all Details of table to load js
+            trs = driver.find_elements_by_css_selector("table#port_sort tbody tr")
+            for tr in trs:
+                # td in one line
+                tds = tr.find_elements_by_tag_name("td")
+                for td in tds:
+                    if "Detail" in td.text:
+                        td.click()
+
+            trs = driver.find_elements_by_css_selector("table#port_sort tbody tr")
+            symbol_temp = ''
+            for tr in trs:
+                # td in one line
+                tds = tr.find_elements_by_tag_name("td")
+
+                if tds[1].text:
+                    symbol_temp = tds[1].text
+                if "Detail" in tds[3].text:
+                    continue
+                # "symbol", "vol_percent", "date", "type", "price"
+                one_record_line = "{}\t{}\t{}\t{}\t{}\t{}".format(
+                    int_port,
+                    symbol_temp,
+                    tds[header_vs_col_idx['vol_percent']].text if 'vol_percent' in header_vs_col_idx else 'NULL',
+                    tds[header_vs_col_idx['date']].text,
+                    tds[header_vs_col_idx['type']].text if 'type' in header_vs_col_idx else 'buy',
+                    tds[header_vs_col_idx['price']].text)
+                print(one_record_line)
+                if output_file is not None:
+                    output_file.write(one_record_line + '\n')
     finally:
         if driver is not None:
             driver.get("https://www.zacks.com/logout.php")
             driver.close()
+        if output_file is not None:
+            output_file.close()
 
 
 if __name__ == "__main__":
     # execute only if run as a script
-    selenium_chrome()
+    selenium_chrome("record.txt", clear_previous_content=True)
