@@ -20,7 +20,7 @@ Scraping stock data
 2. change directory to project
 3. python3 -m venv ./venv (create venv in project root directory)
 4. source ./venv/bin/activate (activate python virtual environment)         
-5. pip3 install -r /path/to/requirements.txt (install dependencies according requirements.txt)
+5. pip3 install -r ./requirements.txt (install dependencies according requirements.txt)
 6. add file `credentials` at project root, change following username and password to yours.
     ```properties
     username=your@email.com
