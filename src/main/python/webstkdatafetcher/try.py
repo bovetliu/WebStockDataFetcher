@@ -5,6 +5,10 @@ from selenium import webdriver
 # from selenium.webdriver.common.keys import Keys
 # from selenium.webdriver.support import expected_conditions as EC
 from time import sleep
+
+from selenium.webdriver.remote.webdriver import WebDriver
+from selenium.webdriver.remote.webelement import WebElement
+
 from webstkdatafetcher import constants
 
 
@@ -54,6 +58,37 @@ def __table_header_name_remap(header: str):
         return header.lower()
 
 
+def __process_rows_of_table(driver, operation, trs, int_port: str, header_vs_col_idx):
+    if not isinstance(driver, WebDriver):
+        raise TypeError("driver can only be instance of WebDriver")
+    if operation not in ["additions", "deletions"]:
+        raise ValueError("accepted operation can only be \"additions\" or \"deletions\"")
+    for tr in trs:
+        if not isinstance(tr, WebElement):
+            raise TypeError("trs can only be a list of WebElement")
+    print("operation: {}, TODO".format(operation))
+    symbol_temp = ''
+    for tr in trs:
+        # td in one line
+        tds = tr.find_elements_by_tag_name("td")
+        if "No Current Signal" in tds[0].text:
+            continue
+        if tds[1].text:
+            symbol_temp = tds[1].text
+        if "Detail" in tds[3].text:
+            continue
+        # "symbol", "vol_percent", "date", "type", "price"
+        one_record_line = "{}\t{}\t{}\t{}\t{}\t{}".format(
+            int_port,
+            symbol_temp,
+            tds[header_vs_col_idx['vol_percent']].text if 'vol_percent' in header_vs_col_idx else 'NULL',
+            tds[header_vs_col_idx['date']].text,
+            tds[header_vs_col_idx['type']].text if 'type' in header_vs_col_idx else 'buy',
+            tds[header_vs_col_idx['price']].text)
+        # TODO(Bowei): handle deletions and additions table
+        print(one_record_line)
+
+
 def selenium_chrome(output: str = None, clear_previous_content: bool = False):
     """
 
@@ -62,7 +97,7 @@ def selenium_chrome(output: str = None, clear_previous_content: bool = False):
     """
     chrome_option = webdriver.ChromeOptions()
     # invokes headless setter
-    chrome_option.headless = True
+    chrome_option.headless = False
     chrome_option.add_argument("--window-size=1920x1080")
     driver = None
     output_file = None
@@ -74,6 +109,7 @@ def selenium_chrome(output: str = None, clear_previous_content: bool = False):
             output_file.truncate()
 
         driver = webdriver.Chrome(options=chrome_option, service_log_path=constants.chrome_log_path)
+        driver.maximize_window()
         driver.get("https://www.zacks.com/ultimate/")
         credentials = get_propdict_file(constants.credentials_path)
         input_username = driver.find_element_by_css_selector("input#username.txtFld.log_value")
@@ -149,6 +185,10 @@ def selenium_chrome(output: str = None, clear_previous_content: bool = False):
                 print(one_record_line)
                 if output_file is not None:
                     output_file.write(one_record_line + '\n')
+            trs = driver.find_elements_by_css_selector("#ts_content section.deletions tbody tr")
+            __process_rows_of_table(driver, "deletions", trs, int_port, header_vs_col_idx)
+            trs = driver.find_elements_by_css_selector("#ts_content section.additions tbody tr")
+            __process_rows_of_table(driver, "additions", trs, int_port, header_vs_col_idx)
     finally:
         if driver is not None:
             driver.get("https://www.zacks.com/logout.php")
