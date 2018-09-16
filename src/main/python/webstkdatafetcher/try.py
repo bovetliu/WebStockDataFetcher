@@ -153,4 +153,4 @@ def selenium_chrome(output: str = None, clear_previous_content: bool = False):
 
 if __name__ == "__main__":
     # execute only if run as a script
-    selenium_chrome("record.txt", clear_previous_content=True)
+    selenium_chrome("../../../../data/record.txt", clear_previous_content=True)
