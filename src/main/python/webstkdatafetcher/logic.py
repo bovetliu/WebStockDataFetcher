@@ -1,4 +1,3 @@
-import mechanicalsoup
 from selenium import webdriver
 # from selenium.webdriver.common.by import By
 # from selenium.webdriver.support.ui import WebDriverWait
@@ -22,21 +21,6 @@ __internal_header_mapping = {
     "%Chg": "change_percent",
     "Type": "type"
 }
-
-
-def seach_in_duckduckgo():
-    # Connect to duckduckgo
-    browser = mechanicalsoup.StatefulBrowser()
-    browser.open("https://duckduckgo.com/")
-
-    # Fill-in the search form
-    browser.select_form('#search_form_homepage')
-    browser["q"] = "MechanicalSoup"
-    browser.submit_selected()
-
-    # Display the results
-    for link in browser.get_current_page().select('a.result__a'):
-        print(link.text, '->', link.attrs['href'])
 
 
 def get_propdict_file(path: str):
@@ -108,7 +92,7 @@ def selenium_chrome(output: str = None, clear_previous_content: bool = False):
             output_file.seek(0)
             output_file.truncate()
 
-        driver = webdriver.Chrome(options=chrome_option, service_log_path=constants.chrome_log_path)
+        driver = webdriver.Chrome(options=chrome_option)
         driver.maximize_window()
         driver.get("https://www.zacks.com/ultimate/")
         credentials = get_propdict_file(constants.credentials_path)
@@ -195,8 +179,3 @@ def selenium_chrome(output: str = None, clear_previous_content: bool = False):
             driver.close()
         if output_file is not None:
             output_file.close()
-
-
-if __name__ == "__main__":
-    # execute only if run as a script
-    selenium_chrome("../../../../data/record2.txt", clear_previous_content=True)
