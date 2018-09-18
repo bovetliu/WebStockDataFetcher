@@ -23,6 +23,8 @@ def compute_uniqueness_str(*args):
             str_list.append("{0:.5f}".format(ar))
         elif isinstance(ar, date):
             str_list.append(ar.strftime("%y-%m-%d"))
+        elif ar is None:
+            str_list.append("None")
         else:
             raise ValueError("{} is not supported type {}", ar, type(ar))
 

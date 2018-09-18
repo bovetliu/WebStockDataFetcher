@@ -1,4 +1,6 @@
 from typing import List, Callable
+
+import selenium
 from selenium import webdriver
 # from selenium.webdriver.common.by import By
 # from selenium.webdriver.support.ui import WebDriverWait
@@ -7,8 +9,10 @@ from selenium import webdriver
 from time import sleep
 from datetime import date, datetime
 
+from selenium.webdriver import ActionChains
 from selenium.webdriver.remote.webdriver import WebDriver
 from selenium.webdriver.remote.webelement import WebElement
+from selenium.common.exceptions import NoSuchElementException
 
 from webstkdatafetcher import constants
 from webstkdatafetcher import utility
@@ -43,15 +47,7 @@ def __process_rows_of_table(
     for tr in trs:
         if not isinstance(tr, WebElement):
             raise TypeError("trs can only be a list of WebElement")
-    print("operation: {}, TODO".format(operation))
     symbol_temp = ''
-
-    # click all "Details>>" of addition, deletion and Open Portfolio tables to load js
-    for tr in trs:
-        # td in one line
-        for td in tr.find_elements_by_tag_name("td"):
-            if "Detail" in td.text:
-                td.click()
     for tr in trs:
         # td in one line
         tds = tr.find_elements_by_tag_name("td")
@@ -70,15 +66,18 @@ def __process_rows_of_table(
             trade_type = trade_type + '_init'   # long_init short_init,  initialize long or short postion
 
         record_format = "{}\t{}\t{}\t{}\t{}\t{}\t{}"
+        try:
+            price = round(float(tds[header_vs_col_idx['price']].text), 2)
+        except ValueError:
+            price = round(float(tds[header_vs_col_idx['price']].text.replace(',', '')), 2)
         arguments = [port_name, symbol_temp,
                      round(float(tds[header_vs_col_idx['vol_percent']].text.strip('%')) / 100.0, 4)
-                     if 'vol_percent' in header_vs_col_idx else 'NULL',
+                     if 'vol_percent' in header_vs_col_idx else None,
                      datetime.strptime(tds[header_vs_col_idx['date']].text, '%m/%d/%y').date(),
                      trade_type,
-                     round(float(tds[header_vs_col_idx['price']].text), 2),
+                     price,
                      date.today()]
         one_record_line = record_format.format(*arguments)
-        # TODO(Bowei): handle deletions and additions table
         print(one_record_line)
         if callback_on_record_line:
             callback_on_record_line(arguments, *args, **kwarg)
@@ -116,6 +115,10 @@ def selenium_chrome(output: str = None, clear_previous_content: bool = False):
         input_password.send_keys(credentials["password"])
         input_password.submit()
         sleep(3)  # so page can be fully rendered
+        try:
+            driver.find_element_by_css_selector("#accept_cookie").click()
+        except NoSuchElementException:
+            pass
         service_links = driver.find_elements_by_css_selector("#ts_sidebar section#zacks_services a")
         service_name_vs_url = {}
         for link in service_links:
@@ -130,9 +133,9 @@ def selenium_chrome(output: str = None, clear_previous_content: bool = False):
             # "Stocks Under $10",
             # "Value Investor",
             # "Technology",
-            # "Large-Cap Trader",
+            "Large-Cap Trader",
             # "TAZR",
-            "Momentum Trader",
+            # "Momentum Trader",
             # "Counterstrike",
             # "Insider Trader",
             # "Black Box Trader"
@@ -164,10 +167,13 @@ def selenium_chrome(output: str = None, clear_previous_content: bool = False):
                 header_vs_col_idx[table_column_header_name] = idx
 
             # click all "Details>>" of addition, deletion and Open Portfolio tables to load js
-            for tr in driver.find_elements_by_css_selector("table.display tbody tr"):
+            trs = driver.find_elements_by_css_selector("table.display tbody tr")
+            for tr in trs:
                 # td in one line
-                for td in tr.find_elements_by_tag_name("td"):
-                    if "Detail" in td.text:
+                tds = tr.find_elements_by_tag_name("td")
+                for td in tds:
+                    if "Details" in td.text:
+                        td.location_once_scrolled_into_view
                         td.click()
 
             trs = driver.find_elements_by_css_selector("table#port_sort tbody tr")
