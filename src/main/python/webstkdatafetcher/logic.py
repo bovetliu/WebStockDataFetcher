@@ -128,17 +128,17 @@ def selenium_chrome(output: str = None, clear_previous_content: bool = False):
             print("{}, link href: {}".format(link.get_attribute("textContent"), link.get_attribute("href")))
 
         interested_portfolios = [
-            # "Home Run Investor",
-            # "Income Investor",
-            # "Stocks Under $10",
-            # "Value Investor",
-            # "Technology",
+            "Home Run Investor",
+            "Income Investor",
+            "Stocks Under $10",
+            "Value Investor",
+            "Technology",
             "Large-Cap Trader",
-            # "TAZR",
-            # "Momentum Trader",
-            # "Counterstrike",
-            # "Insider Trader",
-            # "Black Box Trader"
+            "TAZR",
+            "Momentum Trader",
+            "Counterstrike",
+            "Insider Trader",
+            "Black Box Trader"
         ]
         if not interested_portfolios or not len(interested_portfolios):
             print("no interested portfolio selected")
