@@ -1,0 +1,92 @@
+<section class="portfolio deletions">
+  <h1>Portfolio Deletions <span class="switch-table"></span></h1>
+  <section class="ts-table-wrap expanded">
+    <div id="del_sort_wrapper" class="dataTables_wrapper no-footer">
+      <table id="del_sort" class="display dataTable no-footer" cellspacing="0" role="grid">
+        <thead>
+          <tr role="row">
+            <th class="company sort" tabindex="0" aria-controls="del_sort" rowspan="1" colspan="1" aria-label="Company: activate to sort column ascending">Company</th>
+            <th class="symbol sort" tabindex="0" aria-controls="del_sort" rowspan="1" colspan="1" aria-label="Sym: activate to sort column ascending">Sym</th>
+            <th class="date-add sort" tabindex="0" aria-controls="del_sort" rowspan="1" colspan="1" aria-label="+Date: activate to sort column descending">+Date</th>
+            <th class="price-add sort" tabindex="0" aria-controls="del_sort" rowspan="1" colspan="1" aria-label="$Add: activate to sort column ascending">$Add</th>
+            <th class="price-last sort" tabindex="0" aria-controls="del_sort" rowspan="1" colspan="1" aria-label="$Last: activate to sort column ascending">$Last</th>
+            <th class="change-percent sort_desc" tabindex="0" aria-controls="del_sort" rowspan="1" colspan="1" aria-sort="descending" aria-label="%Chg: activate to sort column ascending">%Chg</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Conduent Inc.    CNDT    8/20/18 21.34   22.95   7.54%  -->
+          <tr role="row">
+            <td class="company" title="Conduent Inc.">Conduent Inc.</td>
+            <td class="symbol"><a href="//www.zacks.com/stock/quote/CNDT" rel="CNDT" class=" hoverquote-container-od " alt="CNDT  Quote" show-add-portfolio="true" data-hasqtip="CNDT" oldtitle="CNDT  Quote" title=""><span class="hoverquote-symbol">CNDT</span></a></td>
+            <td class="date-add">8/20/18</td>
+            <td class="price-add">21.34</td>
+            <td class="price-last">22.95</td>
+            <td class="change-percent gain sorting_1">7.54%</td>
+          </tr>
+          <!-- OGE Energy Corpora    OGE    9/10/18 37.46   37.31   -0.40%  -->
+          <tr role="row">
+            <td class="company" title="OGE Energy Corpora">OGE Energy Corpora</td>
+            <td class="symbol"><a href="//www.zacks.com/stock/quote/OGE" rel="OGE" class=" hoverquote-container-od " alt="OGE  Quote" show-add-portfolio="true" data-hasqtip="OGE" oldtitle="OGE  Quote" title=""><span class="hoverquote-symbol">OGE</span></a></td>
+            <td class="date-add">9/10/18</td>
+            <td class="price-add">37.46</td>
+            <td class="price-last">37.31</td>
+            <td class="change-percent loss sorting_1">-0.40%</td>
+          </tr>
+          <!-- 3D Systems Corpora    DDD    9/10/18 18.60   18.24   -1.94%  -->
+          <tr role="row">
+            <td class="company" title="3D Systems Corpora">3D Systems Corpora</td>
+            <td class="symbol"><a href="//www.zacks.com/stock/quote/DDD" rel="DDD" class=" hoverquote-container-od " alt="DDD  Quote" show-add-portfolio="true" data-hasqtip="DDD" oldtitle="DDD  Quote" title=""><span class="hoverquote-symbol">DDD</span></a></td>
+            <td class="date-add">9/10/18</td>
+            <td class="price-add">18.60</td>
+            <td class="price-last">18.24</td>
+            <td class="change-percent loss sorting_1">-1.94%</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+</section>
+
+
+<section class="portfolio deletions">
+  <h1>Portfolio Deletions <span class="switch-table"></span></h1>
+  <section class="ts-table-wrap expanded">
+    <div id="del_sort_wrapper" class="dataTables_wrapper no-footer">
+      <table id="del_sort" class="display dataTable no-footer" cellspacing="0" role="grid">
+        <thead>
+          <tr role="row">
+            <th class="company sort" tabindex="0" aria-controls="del_sort" rowspan="1" colspan="1" aria-label="Company: activate to sort column ascending">Company</th>
+            <th class="symbol sort" tabindex="0" aria-controls="del_sort" rowspan="1" colspan="1" aria-label="Sym: activate to sort column ascending">Sym</th>
+            <th class="value-percent sort" tabindex="0" aria-controls="del_sort" rowspan="1" colspan="1" aria-label="%Val: activate to sort column descending">%Val</th>
+            <th class="date-add sort" tabindex="0" aria-controls="del_sort" rowspan="1" colspan="1" aria-label="+Date: activate to sort column descending">+Date</th>
+            <th class="price-add sort" tabindex="0" aria-controls="del_sort" rowspan="1" colspan="1" aria-label="$Add: activate to sort column ascending">$Add</th>
+            <th class="price-last sort" tabindex="0" aria-controls="del_sort" rowspan="1" colspan="1" aria-label="$Last: activate to sort column ascending">$Last</th>
+            <th class="change-percent sort_desc" tabindex="0" aria-controls="del_sort" rowspan="1" colspan="1" aria-sort="descending" aria-label="%Chg: activate to sort column ascending">%Chg</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Avx Corp    AVX    12.43%   8/23/18   20.22   19.08   -5.64% -->
+          <tr role="row">
+            <td class="company" title="AVX Corp">AVX Corp</td>
+            <td class="symbol"><a href="//www.zacks.com/stock/quote/AVX" rel="AVX" class=" hoverquote-container-od " alt="AVX  Quote" show-add-portfolio="true" data-hasqtip="AVX" oldtitle="AVX  Quote" title=""><span class="hoverquote-symbol">AVX</span></a></td>
+            <td class="value-percent">12.43%</td>
+            <td class="date-add">8/23/18</td>
+            <td class="price-add">20.22</td>
+            <td class="price-last">19.08</td>
+            <td class="change-percent loss sorting_1">-5.64%</td>
+          </tr>
+          <!-- AudioCodes Ltd   AUDC    11.91%   8/13/18   10.81   9.69   -10.36% -->
+          <tr role="row">
+            <td class="company" title="AudioCodes Ltd.">AudioCodes Ltd.</td>
+            <td class="symbol"><a href="//www.zacks.com/stock/quote/AUDC" rel="AUDC" class=" hoverquote-container-od " alt="AUDC  Quote" show-add-portfolio="true" data-hasqtip="AUDC" oldtitle="AUDC  Quote" title=""><span class="hoverquote-symbol">AUDC</span></a></td>
+            <td class="value-percent">11.91%</td>
+            <td class="date-add">8/13/18</td>
+            <td class="price-add">10.81</td>
+            <td class="price-last">9.69</td>
+            <td class="change-percent loss sorting_1">-10.36%</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+</section>

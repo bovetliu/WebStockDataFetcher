@@ -4,11 +4,13 @@ from selenium import webdriver
 # from selenium.webdriver.common.keys import Keys
 # from selenium.webdriver.support import expected_conditions as EC
 from time import sleep
+from datetime import datetime
 
 from selenium.webdriver.remote.webdriver import WebDriver
 from selenium.webdriver.remote.webelement import WebElement
 
 from webstkdatafetcher import constants
+from webstkdatafetcher import utility
 
 
 __internal_header_mapping = {
@@ -19,21 +21,8 @@ __internal_header_mapping = {
     "$Add": "price",
     "$Last": "last_price",
     "%Chg": "change_percent",
-    "Type": "type"
+    "Type": "type"   # only Counterstrike,  TAZR and shortlist have Type column
 }
-
-
-def get_propdict_file(path: str):
-    tbr = {}
-    with open(path) as credential_file:
-        for line in credential_file:
-            line = line.rstrip()
-            line_splits = line.split("=")
-            if len(line_splits) != 2:
-                raise ValueError(line + " could not split into key and value")
-            tbr[line_splits[0]] = line_splits[1]
-    return tbr
-
 
 def __table_header_name_remap(header: str):
     if header in __internal_header_mapping:
@@ -42,16 +31,23 @@ def __table_header_name_remap(header: str):
         return header.lower()
 
 
-def __process_rows_of_table(driver, operation, trs, int_port: str, header_vs_col_idx):
+def __process_rows_of_table(driver, operation, trs, port_name: str, header_vs_col_idx, output_file=None):
     if not isinstance(driver, WebDriver):
         raise TypeError("driver can only be instance of WebDriver")
-    if operation not in ["additions", "deletions"]:
+    if operation not in ["additions", "deletions", "scan"]:
         raise ValueError("accepted operation can only be \"additions\" or \"deletions\"")
     for tr in trs:
         if not isinstance(tr, WebElement):
             raise TypeError("trs can only be a list of WebElement")
     print("operation: {}, TODO".format(operation))
     symbol_temp = ''
+
+    # click all "Details>>" of addition, deletion and Open Portfolio tables to load js
+    for tr in trs:
+        # td in one line
+        for td in tr.find_elements_by_tag_name("td"):
+            if "Detail" in td.text:
+                td.click()
     for tr in trs:
         # td in one line
         tds = tr.find_elements_by_tag_name("td")
@@ -61,16 +57,30 @@ def __process_rows_of_table(driver, operation, trs, int_port: str, header_vs_col
             symbol_temp = tds[1].text
         if "Detail" in tds[3].text:
             continue
-        # "symbol", "vol_percent", "date", "type", "price"
-        one_record_line = "{}\t{}\t{}\t{}\t{}\t{}".format(
-            int_port,
-            symbol_temp,
-            tds[header_vs_col_idx['vol_percent']].text if 'vol_percent' in header_vs_col_idx else 'NULL',
-            tds[header_vs_col_idx['date']].text,
-            tds[header_vs_col_idx['type']].text if 'type' in header_vs_col_idx else 'buy',
-            tds[header_vs_col_idx['price']].text)
+        # "portfolio name", "symbol", "vol_percent", "date", "type", "price"
+
+        trade_type = __determine_trade_type(tds, header_vs_col_idx)
+        if operation == 'deletions':
+            trade_type = trade_type + '_close'  # close long or short position
+        elif operation == 'additions':
+            trade_type = trade_type + '_init'   # long_init short_init,  initialize long or short postion
+
+        record_format = "{}\t{}\t{}\t{}\t{}\t{}\t{}"
+        arguments = [port_name, symbol_temp,
+                     tds[header_vs_col_idx['vol_percent']].text if 'vol_percent' in header_vs_col_idx else 'NULL',
+                     tds[header_vs_col_idx['date']].text,
+                     trade_type,
+                     tds[header_vs_col_idx['price']].text,
+                     datetime.today().strftime("%y-%m-%d")]
+        one_record_line = record_format.format(*arguments)
         # TODO(Bowei): handle deletions and additions table
         print(one_record_line)
+        if output_file is not None:
+            output_file.write(one_record_line + '\n')
+        if operation == 'scan':
+            # insert record to `portfolio_scan`
+
+            pass
 
 
 def selenium_chrome(output: str = None, clear_previous_content: bool = False):
@@ -95,7 +105,7 @@ def selenium_chrome(output: str = None, clear_previous_content: bool = False):
         driver = webdriver.Chrome(options=chrome_option)
         driver.maximize_window()
         driver.get("https://www.zacks.com/ultimate/")
-        credentials = get_propdict_file(constants.credentials_path)
+        credentials = utility.get_propdict_file(constants.credentials_path)
         input_username = driver.find_element_by_css_selector("input#username.txtFld.log_value")
         input_username.send_keys(credentials["username"])
         input_password = driver.find_element_by_css_selector("input#password.txtFld.log_value")
@@ -111,20 +121,29 @@ def selenium_chrome(output: str = None, clear_previous_content: bool = False):
             service_name_vs_url[link.get_attribute("textContent").lower()] = link.get_attribute("href")
             print("{}, link href: {}".format(link.get_attribute("textContent"), link.get_attribute("href")))
 
-        # interested_portfolios = ["Home Run Investor", "Income Investor", "Stocks Under $10",
-        #                          "Value Investor", "Technology", "Large-Cap Trader",
-        #                          "TAZR", "Momentum Trader", "Counterstrike", "Insider Trader",
-        #                          "Black Box Trader"]
         interested_portfolios = [
-            "Home Run Investor", "Income Investor",
-            # "Stocks Under $10","Value Investor", "Technology",
-            # "Large-Cap Trader", "TAZR", "Momentum Trader", "Counterstrike", "Insider Trader", "Black Box Trader"
+            # "Home Run Investor",
+            # "Income Investor",
+            # "Stocks Under $10",
+            # "Value Investor",
+            # "Technology",
+            # "Large-Cap Trader",
+            # "TAZR",
+            "Momentum Trader",
+            # "Counterstrike",
+            # "Insider Trader",
+            # "Black Box Trader"
         ]
+        if not interested_portfolios or not len(interested_portfolios):
+            print("no interested portfolio selected")
+            return
+
         for int_port in interested_portfolios:
             assert int_port.lower() in service_name_vs_url, "\"" + int_port.lower() + "\" could not be found."
 
-        header = "{}\t{}\t{}\t{}\t{}\t{}".format(
-            "portfolio", "symbol", "vol_percent", "date", "type", "price")
+        # record_date means the date this record generated
+        header = "{}\t{}\t{}\t{}\t{}\t{}\t{}".format(
+            "portfolio", "symbol", "vol_percent", "date_added", "type", "price", "record_date")
         print(header)
         if output_file is not None:
             output_file.write(header + "\n")
@@ -149,33 +168,19 @@ def selenium_chrome(output: str = None, clear_previous_content: bool = False):
                         td.click()
 
             trs = driver.find_elements_by_css_selector("table#port_sort tbody tr")
-            symbol_temp = ''
-            for tr in trs:
-                # td in one line
-                tds = tr.find_elements_by_tag_name("td")
-
-                if tds[1].text:
-                    symbol_temp = tds[1].text
-                if "Detail" in tds[3].text:
-                    continue
-                # "symbol", "vol_percent", "date", "type", "price"
-                one_record_line = "{}\t{}\t{}\t{}\t{}\t{}".format(
-                    int_port,
-                    symbol_temp,
-                    tds[header_vs_col_idx['vol_percent']].text if 'vol_percent' in header_vs_col_idx else 'NULL',
-                    tds[header_vs_col_idx['date']].text,
-                    tds[header_vs_col_idx['type']].text if 'type' in header_vs_col_idx else 'buy',
-                    tds[header_vs_col_idx['price']].text)
-                print(one_record_line)
-                if output_file is not None:
-                    output_file.write(one_record_line + '\n')
+            __process_rows_of_table(driver, "scan", trs, int_port, header_vs_col_idx, output_file)
             trs = driver.find_elements_by_css_selector("#ts_content section.deletions tbody tr")
-            __process_rows_of_table(driver, "deletions", trs, int_port, header_vs_col_idx)
+            __process_rows_of_table(driver, "deletions", trs, int_port, header_vs_col_idx, output_file)
             trs = driver.find_elements_by_css_selector("#ts_content section.additions tbody tr")
-            __process_rows_of_table(driver, "additions", trs, int_port, header_vs_col_idx)
+            __process_rows_of_table(driver, "additions", trs, int_port, header_vs_col_idx, output_file)
     finally:
         if driver is not None:
             driver.get("https://www.zacks.com/logout.php")
             driver.close()
         if output_file is not None:
             output_file.close()
+
+
+def __determine_trade_type(tds, header_vs_col_idx):
+    return tds[header_vs_col_idx['type']].text.lower() if 'type' in header_vs_col_idx else 'long'
+
