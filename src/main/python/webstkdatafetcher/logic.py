@@ -172,11 +172,13 @@ def selenium_chrome(output: str = None, clear_previous_content: bool = False):
 
             trs = driver.find_elements_by_css_selector("table#port_sort tbody tr")
             __process_rows_of_table(driver, "scan", trs, int_port,
-                                    header_vs_col_idx, write_record_to_scan, mysql_helper)
+                                    header_vs_col_idx, insert_record, mysql_helper, 'portfolio_scan')
             trs = driver.find_elements_by_css_selector("#ts_content section.deletions tbody tr")
-            __process_rows_of_table(driver, "deletions", trs, int_port, header_vs_col_idx)
+            __process_rows_of_table(driver, "deletions", trs, int_port,
+                                    header_vs_col_idx, insert_record, mysql_helper, 'portfolio_operations')
             trs = driver.find_elements_by_css_selector("#ts_content section.additions tbody tr")
-            __process_rows_of_table(driver, "additions", trs, int_port, header_vs_col_idx)
+            __process_rows_of_table(driver, "additions", trs, int_port,
+                                    header_vs_col_idx, insert_record, mysql_helper, 'portfolio_operations')
     finally:
         if driver is not None:
             driver.get("https://www.zacks.com/logout.php")
@@ -186,12 +188,13 @@ def selenium_chrome(output: str = None, clear_previous_content: bool = False):
         mysql_helper.set_reuse_connection(False)
 
 
-def write_record_to_scan(records: List, *args, **kwargs):
+def insert_record(records: List, *args, **kwargs):
     mysql_helper = args[0]
+    tgt_table = args[1]
     col_names = ["portfolio", "symbol", "vol_percent", "date_added", "type", "price", "record_date", "uniqueness"]
     uniq = utility.compute_uniqueness_str(*records)
     records.append(uniq)
-    mysql_helper.insert_one_record('portfolio_scan', col_names=col_names, values=records, suppress_duplicate=True)
+    mysql_helper.insert_one_record(tgt_table, col_names=col_names, values=records, suppress_duplicate=True)
 
 
 def __determine_trade_type(tds, header_vs_col_idx):
