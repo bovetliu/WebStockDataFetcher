@@ -46,7 +46,7 @@ class TestMysqlRelatedModule(unittest.TestCase):
                     print("there is/are {} results returned.".format(len(result_collect)))
 
             mysql_helper.select(target_portfolio, callback_on_cursor=temp, result_collect=results)
-            self.assertEqual(0, len(results))
+            initial_num = len(results)
             mysql_helper.insert_one_record(target_portfolio, col_val_dict=col_val_dict)
 
             mysql_helper.select(target_portfolio,
@@ -63,14 +63,12 @@ class TestMysqlRelatedModule(unittest.TestCase):
                     raise err
                 else:
                     print("Caught excepted error : {}".format(err.msg))
+            mysql_helper.insert_one_record(target_portfolio, col_val_dict=col_val_dict, suppress_duplicate=True)
             mysql_helper.delete_table(target_portfolio, col_val_dict=col_val_dict)
             mysql_helper.select(target_portfolio, callback_on_cursor=temp, result_collect=results)
-            self.assertEqual(0, len(results))
+            self.assertEqual(initial_num, len(results))
         finally:
             mysql_helper.set_reuse_connection(False)
             mysql_helper.execute_update(
                 "DELETE FROM {} WHERE symbol = '{}'".format(target_portfolio, values[1])
             )
-
-
-

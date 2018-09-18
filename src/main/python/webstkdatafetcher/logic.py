@@ -1,17 +1,18 @@
+from typing import List, Callable
 from selenium import webdriver
 # from selenium.webdriver.common.by import By
 # from selenium.webdriver.support.ui import WebDriverWait
 # from selenium.webdriver.common.keys import Keys
 # from selenium.webdriver.support import expected_conditions as EC
 from time import sleep
-from datetime import datetime
+from datetime import date, datetime
 
 from selenium.webdriver.remote.webdriver import WebDriver
 from selenium.webdriver.remote.webelement import WebElement
 
 from webstkdatafetcher import constants
 from webstkdatafetcher import utility
-
+from webstkdatafetcher.data_connection import mysql_related
 
 __internal_header_mapping = {
     "Company": "company",
@@ -32,7 +33,9 @@ def __table_header_name_remap(header: str):
         return header.lower()
 
 
-def __process_rows_of_table(driver, operation, trs, port_name: str, header_vs_col_idx, output_file=None):
+def __process_rows_of_table(
+        driver, operation, trs, port_name: str, header_vs_col_idx,
+        callback_on_record_line: Callable[[List], None] = None, *args, **kwarg):
     if not isinstance(driver, WebDriver):
         raise TypeError("driver can only be instance of WebDriver")
     if operation not in ["additions", "deletions", "scan"]:
@@ -68,20 +71,17 @@ def __process_rows_of_table(driver, operation, trs, port_name: str, header_vs_co
 
         record_format = "{}\t{}\t{}\t{}\t{}\t{}\t{}"
         arguments = [port_name, symbol_temp,
-                     tds[header_vs_col_idx['vol_percent']].text if 'vol_percent' in header_vs_col_idx else 'NULL',
-                     tds[header_vs_col_idx['date']].text,
+                     round(float(tds[header_vs_col_idx['vol_percent']].text.strip('%')) / 100.0, 4)
+                     if 'vol_percent' in header_vs_col_idx else 'NULL',
+                     datetime.strptime(tds[header_vs_col_idx['date']].text, '%m/%d/%y').date(),
                      trade_type,
-                     tds[header_vs_col_idx['price']].text,
-                     datetime.today().strftime("%y-%m-%d")]
+                     round(float(tds[header_vs_col_idx['price']].text), 2),
+                     date.today()]
         one_record_line = record_format.format(*arguments)
         # TODO(Bowei): handle deletions and additions table
         print(one_record_line)
-        if output_file is not None:
-            output_file.write(one_record_line + '\n')
-        if operation == 'scan':
-            # insert record to `portfolio_scan`
-
-            pass
+        if callback_on_record_line:
+            callback_on_record_line(arguments, *args, **kwarg)
 
 
 def selenium_chrome(output: str = None, clear_previous_content: bool = False):
@@ -96,6 +96,8 @@ def selenium_chrome(output: str = None, clear_previous_content: bool = False):
     chrome_option.add_argument("--window-size=1920x1080")
     driver = None
     output_file = None
+    mysql_helper = mysql_related.MySqlHelper(reuse_connection=True)
+
     try:
         if output:
             output_file = open(output, 'w+')
@@ -169,17 +171,27 @@ def selenium_chrome(output: str = None, clear_previous_content: bool = False):
                         td.click()
 
             trs = driver.find_elements_by_css_selector("table#port_sort tbody tr")
-            __process_rows_of_table(driver, "scan", trs, int_port, header_vs_col_idx, output_file)
+            __process_rows_of_table(driver, "scan", trs, int_port,
+                                    header_vs_col_idx, write_record_to_scan, mysql_helper)
             trs = driver.find_elements_by_css_selector("#ts_content section.deletions tbody tr")
-            __process_rows_of_table(driver, "deletions", trs, int_port, header_vs_col_idx, output_file)
+            __process_rows_of_table(driver, "deletions", trs, int_port, header_vs_col_idx)
             trs = driver.find_elements_by_css_selector("#ts_content section.additions tbody tr")
-            __process_rows_of_table(driver, "additions", trs, int_port, header_vs_col_idx, output_file)
+            __process_rows_of_table(driver, "additions", trs, int_port, header_vs_col_idx)
     finally:
         if driver is not None:
             driver.get("https://www.zacks.com/logout.php")
             driver.close()
         if output_file is not None:
             output_file.close()
+        mysql_helper.set_reuse_connection(False)
+
+
+def write_record_to_scan(records: List, *args, **kwargs):
+    mysql_helper = args[0]
+    col_names = ["portfolio", "symbol", "vol_percent", "date_added", "type", "price", "record_date", "uniqueness"]
+    uniq = utility.compute_uniqueness_str(*records)
+    records.append(uniq)
+    mysql_helper.insert_one_record('portfolio_scan', col_names=col_names, values=records, suppress_duplicate=True)
 
 
 def __determine_trade_type(tds, header_vs_col_idx):

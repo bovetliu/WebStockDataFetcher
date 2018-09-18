@@ -80,7 +80,8 @@ class MySqlHelper:
 
     def insert_one_record(self, table: str, schema: str=None, col_val_dict: dict = None,
                           col_names: List[str] = None,
-                          values: List[str] = None):
+                          values: List = None,
+                          suppress_duplicate: bool = False):
         if not schema:
             schema = self.__database
         if (not isinstance(col_val_dict, dict)) and (not isinstance(col_names, list) or not isinstance(values, list)):
@@ -97,7 +98,13 @@ class MySqlHelper:
                 values.append(value)
         insert_statement = "INSERT INTO `{}`.`{}` ({}) VALUES ({})".format(
             schema, table, ", ".join(col_names), ", ".join(['%s'] * len(col_names)))
-        self.execute_update(insert_statement, values)
+        try:
+            self.execute_update(insert_statement, values)
+        except mysql.connector.Error as err:
+            if err.errno == errorcode.ER_DUP_ENTRY and suppress_duplicate:
+                pass  # suppress_duplicate
+            else:
+                raise err
 
     def delete_table(self, table: str, schema: str=None, col_val_dict: dict = None):
         if not schema:
