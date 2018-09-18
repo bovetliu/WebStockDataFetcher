@@ -14,7 +14,7 @@ class TestMysqlRelatedModule(unittest.TestCase):
     def test_mysql_helper(self):
 
         target_portfolio = "portfolio_scan"
-        mysql_helper = mysql_related.MySqlHelper()
+        mysql_helper = mysql_related.MySqlHelper(reuse_connection=True)
         values = ["test_portfolio",
                   "TEST",
                   0.034,
@@ -67,6 +67,7 @@ class TestMysqlRelatedModule(unittest.TestCase):
             mysql_helper.select(target_portfolio, callback_on_cursor=temp, result_collect=results)
             self.assertEqual(0, len(results))
         finally:
+            mysql_helper.set_reuse_connection(False)
             mysql_helper.execute_update(
                 "DELETE FROM {} WHERE symbol = '{}'".format(target_portfolio, values[1])
             )

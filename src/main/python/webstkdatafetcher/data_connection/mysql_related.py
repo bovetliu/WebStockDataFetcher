@@ -9,7 +9,7 @@ from webstkdatafetcher import constants
 class MySqlHelper:
     """help some simple mysql operation"""
 
-    def __init__(self, db_config_dict: dict = None):
+    def __init__(self, db_config_dict: dict = None, reuse_connection=False):
         if not db_config_dict:
             print('db_config_dict not supplied, going to use default db prop')
             db_config_dict = utility.get_propdict_file(constants.default_db_prop_path)
@@ -19,6 +19,8 @@ class MySqlHelper:
         self.__password = db_config_dict['password']
         self.__host = db_config_dict['host']
         self.__database = db_config_dict['database']
+        self.__reuse_connection = reuse_connection
+        self.__cnx = None
 
     def execute_update(self, stmt: str, values=None, schema: str = None,
                        callback_on_cursor: Callable[[CMySQLCursor], None] = None, *args, **kwarg):
@@ -35,10 +37,16 @@ class MySqlHelper:
         cnx = None
         cursor = None
         try:
-            cnx = mysql.connector.connect(user=self.__user,
-                                          password=self.__password,
-                                          database=schema,
-                                          host=self.__host)
+            if self.__reuse_connection and self.__cnx and self.__cnx.is_connected():
+                cnx = self.__cnx
+
+            else:
+                cnx = mysql.connector.connect(user=self.__user,
+                                              password=self.__password,
+                                              database=schema,
+                                              host=self.__host)
+            if self.__reuse_connection:
+                self.__cnx = cnx
 
             cursor = cnx.cursor()
             print("stmt: {}".format(stmt))
@@ -67,7 +75,8 @@ class MySqlHelper:
                 cursor.close()
             if cnx:
                 cnx.commit()
-                cnx.close()
+                if not self.__reuse_connection:
+                    cnx.close()
 
     def insert_one_record(self, table: str, schema: str=None, col_val_dict: dict = None,
                           col_names: List[str] = None,
@@ -135,9 +144,17 @@ class MySqlHelper:
                             tuple(col_val_dict.values()) if col_val_dict else None,
                             callback_on_cursor=callback_on_cursor, *args, **kwarg)
 
-
-
-
+    def set_reuse_connection(self, reuse_connection):
+        """
+        NOT thread safe
+        """
+        if type(reuse_connection) != bool:
+            raise TypeError("only bool parameter accepted")
+        self.__reuse_connection = reuse_connection
+        if not reuse_connection:
+            if self.__cnx:
+                self.__cnx.close()
+                self.__cnx = None
 
 
 

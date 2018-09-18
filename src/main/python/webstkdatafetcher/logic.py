@@ -24,6 +24,7 @@ __internal_header_mapping = {
     "Type": "type"   # only Counterstrike,  TAZR and shortlist have Type column
 }
 
+
 def __table_header_name_remap(header: str):
     if header in __internal_header_mapping:
         return __internal_header_mapping[header]
