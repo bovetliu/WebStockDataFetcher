@@ -83,7 +83,7 @@ def __process_rows_of_table(
                      price,
                      date.today()]
         one_record_line = record_format.format(*arguments)
-        print(one_record_line)
+        print(operation, one_record_line)
         if callback_on_record_line:
             callback_on_record_line(arguments, *args, **kwarg)
 
