@@ -6,4 +6,5 @@ credentials
 .idea
 venv
 src/main/resources/credential.json
+src/main/resources/remotedb.properties
 src/test/resources/chrome.log

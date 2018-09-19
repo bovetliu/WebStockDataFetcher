@@ -11,10 +11,17 @@ if __name__ == "__main__":
         print("acceptable usage: scrapezacks, email_content01")
         exit(1)
     usecase = sys.argv[1]
+    print("usecase: {}".format(usecase))
     if usecase == 'scrapezacks':
-        # data/record_momenturm.txt
-        output_file_path = join(constants.project_root, "data", "record_momentum.txt")
-        logic.selenium_chrome(output_file_path, clear_previous_content=True, headless=True)
+        db_config_path = join(constants.main_resources, "database.properties")
+        logic.selenium_chrome(clear_previous_content=True,
+                              headless=True,
+                              db_config_dict=utility.get_propdict_file(db_config_path))
+    elif usecase == 'scrapezacks_to_remote':
+        db_config_path = join(constants.main_resources, "remotedb.properties")
+        logic.selenium_chrome(clear_previous_content=True,
+                              headless=True,
+                              db_config_dict=utility.get_propdict_file(db_config_path))
     elif usecase == 'email_content01':
         email01_path = join(constants.test_resources, 'sample_email01.html')
         logic.handle_zacks_email(utility.get_content_of_file(email01_path))

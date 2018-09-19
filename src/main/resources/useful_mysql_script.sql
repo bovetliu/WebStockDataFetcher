@@ -1,3 +1,5 @@
+CREATE DATABASE IF NOT EXISTS zacks;
+USE zacks;
 DROP TABLE IF EXISTS portfolio_scan;
 
 CREATE TABLE IF NOT EXISTS portfolio_scan (

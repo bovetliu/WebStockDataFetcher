@@ -1,4 +1,4 @@
-from typing import List, Callable, Tuple
+from typing import List, Callable
 
 from selenium import webdriver
 # from selenium.webdriver.common.by import By
@@ -123,12 +123,16 @@ def handle_zacks_email(email_content: str):
     #     print(table)
 
 
-def selenium_chrome(output: str = None, clear_previous_content: bool = False, headless: bool = False):
+def selenium_chrome(output: str = None,
+                    clear_previous_content: bool = False,
+                    headless: bool = False,
+                    db_config_dict: dict = None):
     """
 
     :param output: output path
     :param headless: whether to run browser in headless mode.
     :param clear_previous_content clear content if one file already exist at path specified in output
+    :param db_config_dict db configuration dictionary, which includes fields host, username, password, database.
     """
     chrome_option = webdriver.ChromeOptions()
     # invokes headless setter
@@ -136,7 +140,7 @@ def selenium_chrome(output: str = None, clear_previous_content: bool = False, he
     chrome_option.add_argument("--window-size=1920x1080")
     driver = None
     output_file = None
-    mysql_helper = mysql_related.MySqlHelper(reuse_connection=True)
+    mysql_helper = mysql_related.MySqlHelper(reuse_connection=True, db_config_dict=db_config_dict)
 
     try:
         if output:
@@ -155,9 +159,11 @@ def selenium_chrome(output: str = None, clear_previous_content: bool = False, he
 
         input_password.send_keys(credentials["password"])
         input_password.submit()
+        print("submitted ultimate login form")
         sleep(3)  # so page can be fully rendered
         try:
             driver.find_element_by_css_selector("#accept_cookie").click()
+            print("accepted cookie.")
         except NoSuchElementException:
             pass
         service_links = driver.find_elements_by_css_selector("#ts_sidebar section#zacks_services a")
@@ -166,7 +172,7 @@ def selenium_chrome(output: str = None, clear_previous_content: bool = False, he
             if not link.get_attribute("textContent"):
                 raise ValueError("link.text should not be evaluated as false")
             service_name_vs_url[link.get_attribute("textContent").lower()] = link.get_attribute("href")
-            print("{}, link href: {}".format(link.get_attribute("textContent"), link.get_attribute("href")))
+            # print("{}, link href: {}".format(link.get_attribute("textContent"), link.get_attribute("href")))
 
         interested_portfolios = [
             "Home Run Investor",
@@ -214,6 +220,7 @@ def selenium_chrome(output: str = None, clear_previous_content: bool = False, he
                 tds = tr.find_elements_by_tag_name("td")
                 for td in tds:
                     if "Details" in td.text:
+                        # noinspection PyStatementEffect
                         td.location_once_scrolled_into_view
                         td.click()
 
@@ -235,6 +242,7 @@ def selenium_chrome(output: str = None, clear_previous_content: bool = False, he
         mysql_helper.set_reuse_connection(False)
 
 
+# noinspection PyUnusedLocal
 def insert_record(records: List, *args, **kwargs):
     mysql_helper = args[0]
     tgt_table = args[1]
@@ -246,4 +254,3 @@ def insert_record(records: List, *args, **kwargs):
 
 def __determine_trade_type(tds, header_vs_col_idx):
     return tds[header_vs_col_idx['type']].text.lower() if 'type' in header_vs_col_idx else 'long'
-
