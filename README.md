@@ -6,43 +6,43 @@ Scraping stock data
 
 1. Ubuntu 16.04 (not necessarily exactly Ubuntu 16.04, but I used this for development)
 2. Chrome Browser installed, at time of writing, its version is Version 69.0.3497.92 (Official Build) (64-bit)
-3. make chrome driver available in PATH, url to download https://sites.google.com/a/chromium.org/chromedriver/downloads
+3. Make chrome driver available in PATH, url to download https://sites.google.com/a/chromium.org/chromedriver/downloads
     ```bash
     $ which chromedriver
     /home/boweiliu/.local/bin/chromedriver
     ```
-4. python 3.5 and above available, **IMPORTANT** venv module should be installed
+4. Python 3.5 and above available, **IMPORTANT** venv module should be installed
 5. Subscription to Zacks Ultimate 
 
 ### Installing
 
-1. git clone this project to favorable path
-2. change directory to project
-3. add file `credentials` at project root, change following username and password to yours.
+1. Git clone this project to favorable path
+2. Change directory to project
+3. Store zacks ultimate file `credentials` at project root, change following username and password to yours.
     ```properties
     username=your@email.com
     password=your_password
     ```
-4. add file `remotedb.properties` at src/main/resources. This file holds information about remote mysql
+4. Add file `remotedb.properties` to `src/main/resources`. This file holds information about remote mysql
   database, like username, password, host and database (schema name). Its format would be similar with 
-  `src/main/resources/database.properties` 
+  `src/main/resources/database.properties`   
   This is needed to run `scrapezacks_to_remote`.
 
 ## Running
 
 Make sure following commands executed at project root directory
 
-* IF you want to scraoe data and store to local (using database.properties)
+* IF you want to scrape data and store to local (using database.properties)
     ```bash
     ./one_step_run.sh scrapezacks
     ```
 * IF you want to srape data and store to remote mysql (using remotedb.properties)
-
     ```bash
     ./one_step_run.sh scrapezacks_to_remote
     ```
 
-After a succesful run, you should see data like this in `portfolio_scan` and `portfolio_operations` table  
+After a successful run, you should be able to see data like following in `portfolio_scan` and `portfolio_operations` 
+table  
 
 ```SQL
 SELECT portfolio, symbol, vol_percent, date_added, type, price, record_date FROM portfolio_scan;
@@ -87,10 +87,6 @@ SELECT portfolio, symbol, vol_percent, date_added, type, price, record_date FROM
 ### And coding style tests
 
 PEP8
-
-```
-Give an example
-```
 
 ## Deployment
 
