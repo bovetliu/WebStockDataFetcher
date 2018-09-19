@@ -1,6 +1,5 @@
-from typing import List, Callable
+from typing import List, Callable, Tuple
 
-import selenium
 from selenium import webdriver
 # from selenium.webdriver.common.by import By
 # from selenium.webdriver.support.ui import WebDriverWait
@@ -9,10 +8,12 @@ from selenium import webdriver
 from time import sleep
 from datetime import date, datetime
 
-from selenium.webdriver import ActionChains
 from selenium.webdriver.remote.webdriver import WebDriver
 from selenium.webdriver.remote.webelement import WebElement
 from selenium.common.exceptions import NoSuchElementException
+
+from bs4 import BeautifulSoup
+
 
 from webstkdatafetcher import constants
 from webstkdatafetcher import utility
@@ -81,6 +82,45 @@ def __process_rows_of_table(
         print(one_record_line)
         if callback_on_record_line:
             callback_on_record_line(arguments, *args, **kwarg)
+
+
+def handle_zacks_email(email_content: str):
+    """
+    given part of html content of a zacks email wrapped by <div data-test-id="message-body-container">....</div>,
+    process and output a list of list of records
+    [
+      [port_name, symbol, vol_percent, date_added, trade_type, price, record_date, uniqueness],
+      [port_name, symbol, vol_percent, date_added, trade_type, price, record_date, uniqueness],
+    ]
+    :param email_content:
+    :return: a list of records, each record is a list containing values of each column
+    """
+    soup = BeautifulSoup(email_content, 'html.parser')
+    # print(type(soup.find('title')))
+    # print(soup.find('title'))
+
+    target_div = soup.find('div', class_="msg-body").div.div.div
+    # print(target_div)
+    interested_id = target_div['id']
+    print("interested id {}nav".format(interested_id))
+    nav_table = soup.find('table', class_=interested_id + 'nav')
+    next_table = nav_table.find_next_sibling('table')
+    while next_table is not None:
+        the_th = next_table.find('th')
+        if the_th.string:
+            table_head = the_th.string.strip()
+            print(table_head)
+            trs = next_table.tbody.find_all("tr")
+            for tr in trs:
+                print(tr)
+            next_table = next_table.find_next_sibling('table')
+        else:
+            break
+
+    # tables = target_div.find_all('table')
+    # print(len(tables))
+    # for table in tables:
+    #     print(table)
 
 
 def selenium_chrome(output: str = None, clear_previous_content: bool = False):

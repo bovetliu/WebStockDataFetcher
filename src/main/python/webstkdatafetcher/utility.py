@@ -2,6 +2,12 @@ import hashlib
 from datetime import date, datetime
 
 
+def get_content_of_file(path: str):
+    with open(path) as file:
+        lines = file.readlines()
+        return ''.join(lines)
+
+
 def get_propdict_file(path: str):
     tbr = {}
     with open(path) as credential_file:
