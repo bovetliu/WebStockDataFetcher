@@ -3,16 +3,18 @@ from datetime import date, datetime
 
 
 def get_content_of_file(path: str):
-    with open(path) as file:
+    with open(path, 'r') as file:
         lines = file.readlines()
         return ''.join(lines)
 
 
 def get_propdict_file(path: str):
     tbr = {}
-    with open(path) as credential_file:
+    with open(path, 'r') as credential_file:
         for line in credential_file:
-            line = line.rstrip()
+            line = line.strip()
+            if not line:
+                continue
             line_splits = line.split("=")
             if len(line_splits) != 2:
                 raise ValueError(line + " could not split into key and value")
