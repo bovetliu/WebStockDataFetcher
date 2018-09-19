@@ -8,7 +8,7 @@ if __name__ == "__main__":
     # execute only if run as a script
     if len(sys.argv) != 2:
         print("usage: python3 src/main/python/main.py <usage>")
-        print("acceptable usage: scrapezacks, email_content01")
+        print("acceptable usage: scrapezacks, scrapezacks_to_remote, email_content01")
         exit(1)
     usecase = sys.argv[1]
     print("usecase: {}".format(usecase))
@@ -27,4 +27,4 @@ if __name__ == "__main__":
         logic.handle_zacks_email(utility.get_content_of_file(email01_path))
     else:
         print("usage: python3 src/main/python/main.py <usage>")
-        print("acceptable usage: scrapezacks, email_content01")
+        print("acceptable usage: scrapezacks, scrapezacks_to_remote, email_content01")

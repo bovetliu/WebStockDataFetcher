@@ -19,3 +19,10 @@
  Short List, link href: https://www.zacks.com/shortlist/
  Surprise Trader, link href: https://www.zacks.com/surprisetrader/
  TAZR, link href: https://www.zacks.com/tazr/
+
+
+
+
+./one_step_run.sh scrapezacks
+
+./one_step_run.sh scrapezacks_to_remote

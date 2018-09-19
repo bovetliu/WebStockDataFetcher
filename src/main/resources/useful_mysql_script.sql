@@ -27,10 +27,13 @@ CREATE TABLE IF NOT EXISTS portfolio_operations (
     vol_percent FLOAT NULL,               # NULL or 0.1123
     date_added DATE NOT NULL,             # 2018-04-23
     type VARCHAR(10) NOT NULL,            # long_init, short_init, long_close, short_close
-    price FLOAT NOT NULL,                 # 35.76
+    price FLOAT NULL,                     # 35.76 or NULL
     record_date DATE NOT NULL,            # 2018-08-24
     uniqueness VARCHAR(128) NOT NULL UNIQUE,  # generate by hashing function
     PRIMARY KEY ( id )
 )
 ENGINE=InnoDB,
 CHARACTER SET utf8;
+
+
+-- ALTER TABLE portfolio_operations MODIFY price FLOAT NULL;

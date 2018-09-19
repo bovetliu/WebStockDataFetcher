@@ -66,11 +66,15 @@ def __process_rows_of_table(
         elif operation == 'additions':
             trade_type = trade_type + '_init'   # long_init short_init,  initialize long or short postion
 
+        price_text = tds[header_vs_col_idx['price']].text.strip()
         record_format = "{}\t{}\t{}\t{}\t{}\t{}\t{}"
         try:
-            price = round(float(tds[header_vs_col_idx['price']].text), 2)
+            if price_text:
+                price = round(float(price_text), 2)
+            else:
+                price = None
         except ValueError:
-            price = round(float(tds[header_vs_col_idx['price']].text.replace(',', '')), 2)
+                price = round(float(price_text.replace(',', '')), 2)
         arguments = [port_name, symbol_temp,
                      round(float(tds[header_vs_col_idx['vol_percent']].text.strip('%')) / 100.0, 4)
                      if 'vol_percent' in header_vs_col_idx else None,
