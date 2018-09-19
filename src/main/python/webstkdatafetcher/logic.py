@@ -240,6 +240,7 @@ def selenium_chrome(output: str = None,
         if output_file is not None:
             output_file.close()
         mysql_helper.set_reuse_connection(False)
+    print("selenium_chrome ends normally.")
 
 
 # noinspection PyUnusedLocal
