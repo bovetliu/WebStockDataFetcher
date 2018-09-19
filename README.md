@@ -11,51 +11,78 @@ Scraping stock data
     $ which chromedriver
     /home/boweiliu/.local/bin/chromedriver
     ```
-4. python 3.5 and above available
-
+4. python 3.5 and above available, **IMPORTANT** venv module should be installed
+5. Subscription to Zacks Ultimate 
 
 ### Installing
 
 1. git clone this project to favorable path
 2. change directory to project
-3. python3 -m venv ./venv (create venv in project root directory)
-4. source ./venv/bin/activate (activate python virtual environment)         
-5. pip3 install -r ./requirements.txt (install dependencies according requirements.txt)
-6. add file `credentials` at project root, change following username and password to yours.
+3. add file `credentials` at project root, change following username and password to yours.
     ```properties
     username=your@email.com
     password=your_password
     ```
-7. add directory `data` at project root
-
+4. add file `remotedb.properties` at src/main/resources. This file holds information about remote mysql
+  database, like username, password, host and database (schema name). Its format would be similar with 
+  `src/main/resources/database.properties` 
+  This is needed to run `scrapezacks_to_remote`.
 
 ## Running
 
-```bash
-# make sure following command is executed at project root directory
-python3 src/main/python/main.py example01
+Make sure following commands executed at project root directory
+
+* IF you want to scraoe data and store to local (using database.properties)
+    ```bash
+    ./one_step_run.sh scrapezacks
+    ```
+* IF you want to srape data and store to remote mysql (using remotedb.properties)
+
+    ```bash
+    ./one_step_run.sh scrapezacks_to_remote
+    ```
+
+After a succesful run, you should see data like this in `portfolio_scan` and `portfolio_operations` table  
+
+```SQL
+SELECT portfolio, symbol, vol_percent, date_added, type, price, record_date FROM portfolio_scan;
 ```
-you should be able see data/record2.txt, possible content would be like 
 
 ```text
-portfolio	symbol	vol_percent	date	type	price
-Home Run Investor	SQ	NULL	7/11/17	buy	25.37
-Home Run Investor	EPAY	NULL	2/2/18	buy	37.75
-Home Run Investor	ZEN	NULL	3/16/18	buy	47.00
-Home Run Investor	I	NULL	5/30/18	buy	16.14
-Home Run Investor	EVBG	NULL	5/16/18	buy	43.27
-Home Run Investor	SEND	NULL	8/9/18	buy	31.11
-Home Run Investor	IMAX	NULL	6/27/18	buy	22.40
-Home Run Investor	ALTR	NULL	6/13/18	buy	36.43
-Home Run Investor	HSC	NULL	9/5/18	buy	28.38
-Home Run Investor	HABT	NULL	8/15/18	buy	16.25
-Home Run Investor	TRN	NULL	7/25/18	buy	36.78
-Home Run Investor	TITN	NULL	9/12/18	buy	17.94
-Income Investor	WASH	NULL	10/8/12	buy	23.23
-Income Investor	LMT	NULL	2/10/14	buy	144.57
++-------------------+--------+-------------+------------+------+--------+-------------+
+| portfolio         | symbol | vol_percent | date_added | type | price  | record_date |
++-------------------+--------+-------------+------------+------+--------+-------------+
+| Home Run Investor | SQ     |        NULL | 2017-07-11 | long |  25.37 | 2018-09-19  |
+| Home Run Investor | EPAY   |        NULL | 2018-02-02 | long |  37.75 | 2018-09-19  |
+....
+
+| Technology        | BE     |        NULL | 2018-08-23 | long |  28.37 | 2018-09-19  |
+| Technology        | SATS   |        NULL | 2018-08-07 | long |  47.52 | 2018-09-19  |
+| Technology        | VEEV   |        NULL | 2018-09-13 | long | 105.53 | 2018-09-19  |
+| Technology        | DIOD   |        NULL | 2018-07-12 | long |  35.45 | 2018-09-19  |
+| Technology        | DOCU   |        NULL | 2018-09-10 | long |  55.15 | 2018-09-19  |
+| Large-Cap Trader  | CC     |      0.0168 | 2017-05-05 | long |  40.42 | 2018-09-19  |
+| Large-Cap Trader  | CC     |      0.0174 | 2017-04-20 | long |  36.58 | 2018-09-19  |
+| Large-Cap Trader  | CC     |      0.0363 | 2016-11-01 | long |  16.66 | 2018-09-19  |
+| Large-Cap Trader  | MU     |      0.0321 | 2017-09-19 | long |   35.8 | 2018-09-19  |
+| Large-Cap Trader  | MU     |      0.0579 | 2017-08-17 | long |  30.07 | 2018-09-19  |
+....
+| Black Box Trader  | DHI    |        NULL | 2018-09-17 | long |   42.8 | 2018-09-19  |
+| Black Box Trader  | TSCO   |        NULL | 2018-09-04 | long |  90.46 | 2018-09-19  |
+| Black Box Trader  | TJX    |        NULL | 2018-09-04 | long | 110.86 | 2018-09-19  |
++-------------------+--------+-------------+------------+------+--------+-------------+
+
+
++-------------------+--------+-------------+------------+------------+-------+-------------+
+| portfolio         | symbol | vol_percent | date_added | type       | price | record_date |
++-------------------+--------+-------------+------------+------------+-------+-------------+
+| Home Run Investor | ACXM   |        NULL | 2018-09-19 | long_init  |  NULL | 2018-09-19  |
+| Momentum Trader   | CSBR   |      0.1344 | 2018-09-19 | long_init  |  NULL | 2018-09-19  |
+| Insider Trader    | SGMS   |      0.0687 | 2018-08-15 | long_close | 29.68 | 2018-09-19  |
+| Insider Trader    | SSP    |      0.0002 | 2018-09-19 | long_init  |  NULL | 2018-09-19  |
++-------------------+--------+-------------+------------+------------+-------+-------------+
 
 ```
-
 
 ### And coding style tests
 

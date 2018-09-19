@@ -244,6 +244,7 @@ def selenium_chrome(output: str = None,
         if output_file is not None:
             output_file.close()
         mysql_helper.set_reuse_connection(False)
+        deduplicate(mysql_helper)
     print("selenium_chrome ends normally.")
 
 
@@ -255,6 +256,26 @@ def insert_record(records: List, *args, **kwargs):
     uniq = utility.compute_uniqueness_str(*records)
     records.append(uniq)
     mysql_helper.insert_one_record(tgt_table, col_names=col_names, values=records, suppress_duplicate=True)
+
+
+def deduplicate(mysql_helper: mysql_related.MySqlHelper):
+    if not isinstance(mysql_helper, mysql_related.MySqlHelper):
+        raise ValueError("mysql_helper must be instance of mysql_related.MySqlHelper")
+    stmt_format = """
+    DELETE t1  FROM {0} t1
+      INNER JOIN {0} t2
+    WHERE t1.id < t2.id
+      AND t1.portfolio = t2.portfolio
+      AND t1.symbol = t2.symbol
+      AND t1.date_added = t2.date_added
+      AND t1.type = t2.type
+      AND t1.record_date = t2.record_date;
+    """
+    deduplicate_operations = stmt_format.format("portfolio_operations")
+    deduplicate_scan = stmt_format.format("portfolio_scan")
+    mysql_helper.execute_update(deduplicate_operations)
+    mysql_helper.execute_update(deduplicate_scan)
+    print("de-duplication executed correctly")
 
 
 def __determine_trade_type(tds, header_vs_col_idx):

@@ -1,6 +1,7 @@
 from webstkdatafetcher import logic
 from webstkdatafetcher import constants
 from webstkdatafetcher import utility
+from webstkdatafetcher.data_connection import mysql_related
 from os.path import join
 import sys
 
@@ -22,6 +23,13 @@ if __name__ == "__main__":
         logic.selenium_chrome(clear_previous_content=True,
                               headless=True,
                               db_config_dict=utility.get_propdict_file(db_config_path))
+    elif usecase.startswith("deduplicate"):
+        if usecase.endswith("_remote", len("deduplicate")):
+            db_config_path = join(constants.main_resources, "remotedb.properties")
+        else:
+            db_config_path = join(constants.main_resources, "database.properties")
+        mysql_helper = mysql_related.MySqlHelper(db_config_dict=utility.get_propdict_file(db_config_path))
+        logic.deduplicate(mysql_helper)
     elif usecase == 'email_content01':
         email01_path = join(constants.test_resources, 'sample_email01.html')
         logic.handle_zacks_email(utility.get_content_of_file(email01_path))

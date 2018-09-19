@@ -26,3 +26,13 @@
 ./one_step_run.sh scrapezacks
 
 ./one_step_run.sh scrapezacks_to_remote
+
+
+
+## some mysql commands:
+select * from portfolio_scan;
+select * from portfolio_operations;
+
+## TODO
+Add mysql data deduplication, because records in additions might not have price data at beginning, later it would be
+added in webpage. Which will have two additions of same symbol, same day, same portfolio, similar vol_percent,

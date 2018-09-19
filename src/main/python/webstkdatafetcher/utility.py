@@ -13,7 +13,7 @@ def get_propdict_file(path: str):
     with open(path, 'r') as credential_file:
         for line in credential_file:
             line = line.strip()
-            if not line:
+            if not line or line.startswith("#"):
                 continue
             line_splits = line.split("=")
             if len(line_splits) != 2:

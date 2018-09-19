@@ -18,6 +18,7 @@ class MySqlHelper:
         self.__user = db_config_dict['user']
         self.__password = db_config_dict['password']
         self.__host = db_config_dict['host']
+        print("MySqlHelper#__init__(), host : {}".format(self.__host))
         self.__database = db_config_dict['database']
         self.__reuse_connection = reuse_connection
         self.__cnx = None
@@ -162,8 +163,3 @@ class MySqlHelper:
             if self.__cnx:
                 self.__cnx.close()
                 self.__cnx = None
-
-
-
-
-
