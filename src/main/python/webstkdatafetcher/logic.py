@@ -123,15 +123,16 @@ def handle_zacks_email(email_content: str):
     #     print(table)
 
 
-def selenium_chrome(output: str = None, clear_previous_content: bool = False):
+def selenium_chrome(output: str = None, clear_previous_content: bool = False, headless: bool = False):
     """
 
     :param output: output path
+    :param headless: whether to run browser in headless mode.
     :param clear_previous_content clear content if one file already exist at path specified in output
     """
     chrome_option = webdriver.ChromeOptions()
     # invokes headless setter
-    chrome_option.headless = False
+    chrome_option.headless = headless
     chrome_option.add_argument("--window-size=1920x1080")
     driver = None
     output_file = None
