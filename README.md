@@ -5,7 +5,7 @@ Scraping stock data
 ### Prerequisites
 
 1. Ubuntu 16.04 (not necessarily exactly Ubuntu 16.04, but I used this for development)
-2. Chrome Browser installed, at time of writing, its version is Version 69.0.3497.92 (Official Build) (64-bit)
+2. Chrome Browser installed, at time of writing, its version is 69.0.3497.92 (Official Build) (64-bit)
 3. Make chrome driver available in PATH, url to download https://sites.google.com/a/chromium.org/chromedriver/downloads
     ```bash
     $ which chromedriver
@@ -18,7 +18,7 @@ Scraping stock data
 
 1. Git clone this project to favorable path
 2. Change directory to project
-3. Store zacks ultimate file `credentials` at project root, change following username and password to yours.
+3. Store zacks ultimate credential to file `credentials` at project root, change following username and password to yours.
     ```properties
     username=your@email.com
     password=your_password
@@ -32,7 +32,7 @@ Scraping stock data
 
 Make sure following commands executed at project root directory
 
-* IF you want to scrape data and store to local (using database.properties)
+* IF you want to scrape data and store to local (using database.properties, make sure username, password are correct)
     ```bash
     ./one_step_run.sh scrapezacks
     ```
