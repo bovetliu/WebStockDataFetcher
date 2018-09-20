@@ -7,7 +7,7 @@ from selenium import webdriver
 # from selenium.webdriver.common.keys import Keys
 # from selenium.webdriver.support import expected_conditions as EC
 from time import sleep
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 
 from selenium.webdriver.remote.webdriver import WebDriver
 from selenium.webdriver.remote.webelement import WebElement
@@ -31,6 +31,13 @@ __internal_header_mapping = {
     "Type": "type"   # only Counterstrike,  TAZR and shortlist have Type column
 }
 
+__portfolio_idx = 0
+__symbol_idx = 1
+__vol_percent_idx = 2
+__date_added_idx = 3
+__type_idx = 4
+__price_idx = 5
+
 
 def __table_header_name_remap(header: str):
     if header in __internal_header_mapping:
@@ -46,11 +53,21 @@ def is_in(one_record, records):
     return False
 
 
-def is_same_trade(curr_record, prev_record):
-    if curr_record is prev_record:
+def is_same_trade(this_record, that_record):
+    """
+    check whether portfolio, symbol, date_added, type and price are the same
+
+    :param this_record: one record
+    :param that_record: previous records
+    :return: true if portfolio, symbol, date_added, type and price of two trade records are the same, otherwise false.
+    """
+    if this_record is that_record:
         return True
-    return (curr_record[0] == prev_record[0]) and (curr_record[1] == prev_record[1]) and \
-           (curr_record[3] == prev_record[3]) and (curr_record[4] == prev_record[4])
+    return (this_record[__portfolio_idx] == that_record[__portfolio_idx]) and \
+           (this_record[__symbol_idx] == that_record[__symbol_idx]) and \
+           (this_record[__date_added_idx] == that_record[__date_added_idx]) and \
+           (this_record[__type_idx] == that_record[__type_idx]) and \
+           (this_record[__price_idx] == that_record[__price_idx])
 
 
 def __process_rows_of_table(driver, mysql_helper: mysql_related.MySqlHelper,
@@ -69,20 +86,25 @@ def __process_rows_of_table(driver, mysql_helper: mysql_related.MySqlHelper,
 
     previous_scanned_records = []
     uniqs_of_last_scan = []
-
+    today_date = date.today()
     selected_cols = ['portfolio', 'symbol', 'vol_percent', 'date_added', 'type', 'price', 'record_date', 'uniqueness']
     if operation == 'scan':
-        mysql_helper.select_from("portfolio_scan", None, selected_cols,
-                                 col_val_dict={
-                                     'record_date': date.today(),
-                                     'portfolio': port_name
-                                 },
-                                 callback_on_cursor=mysql_related.MySqlHelper.default_select_collector,
-                                 result_holder=previous_scanned_records)
+        # try fetch today, today - 1 ... today - 5
+        # if found records, break loop, this is to address issue #1
+        # One trade record has price 0 all day then become valid next day
+        for i in range(6):
+            mysql_helper.select_from("portfolio_scan", None, selected_cols,
+                                     col_val_dict={
+                                         'record_date': today_date - timedelta(days=i),
+                                         'portfolio': port_name
+                                     },
+                                     callback_on_cursor=mysql_related.MySqlHelper.default_select_collector,
+                                     result_holder=previous_scanned_records)
+            if len(previous_scanned_records) > 0:
+                break
         uniqs_of_last_scan = set([record[-1] for record in previous_scanned_records])
 
     records = []
-    today_date = date.today()
     for tr in trs:
         # td in one line
         tds = tr.find_elements_by_tag_name("td")
@@ -128,50 +150,57 @@ def __process_rows_of_table(driver, mysql_helper: mysql_related.MySqlHelper,
     col_names = ["portfolio", "symbol", "vol_percent", "date_added", "type", "price", "record_date", "uniqueness"]
 
     if operation == 'scan' and len(previous_scanned_records) > 0:
+        cnt = 0
         for one_record in records:
             if one_record[-1] in uniqs_of_last_scan:
                 uniqs_of_last_scan.remove(one_record[-1])
             else:
-                # this means that in previous scan, this record was not inserted, it is INIT operation
                 mysql_helper.insert_one_record(target_mysql_table,
                                                col_names=col_names, values=one_record, suppress_duplicate=True)
-                # only when date_added is today can be correct
-                if one_record[3] == today_date and not is_in(one_record, previous_scanned_records):
-                    record_derived = one_record[:-1]
-                    # lone becomes lone_init, short becomes short_init
-                    record_derived[4] = record_derived[4] + "_init"
-                    temp_record_for_uniq_calc = record_derived[:]
-                    temp_record_for_uniq_calc[2] = None  # vol_percent should'nt be included into uniqueness calculation
-                    record_derived.append(utility.compute_uniqueness_str(*temp_record_for_uniq_calc))
-                    mysql_helper.insert_one_record('portfolio_operations',
-                                                   col_names=col_names, values=record_derived, suppress_duplicate=True)
+            # if current record is not among previous scan of this portfolio, and its record date is today
+            # then it is a newly added record in open_portfolio
+            if not is_in(one_record, previous_scanned_records) and one_record[__date_added_idx] == today_date:
+                record_derived = one_record[:-1]
+                # lone becomes lone_init, short becomes short_init
+                record_derived[__type_idx] = record_derived[__type_idx] + "_init"
+                temp_record_for_uniq_calc = record_derived[:]
+                # vol_percent should'nt be included into uniqueness calculation
+                temp_record_for_uniq_calc[__vol_percent_idx] = None
+                record_derived.append(utility.compute_uniqueness_str(*temp_record_for_uniq_calc))
+                mysql_helper.insert_one_record('portfolio_operations',
+                                               col_names=col_names, values=record_derived, suppress_duplicate=True)
+                cnt = cnt + 1
+        logging.info("Portfolio \"%s\"(%s) has %s records added compared against last last scan.",
+                     port_name, today_date.strftime('%y-%m-%d'), cnt)
 
-        # at this time, uniq_checksums left belongs to those trades which have been deleted from current portfolio
+        # at this time, elements inside uniqs_of_last_scan belong to those trades which no longer appear in
+        # current portfolio (likely have been deleted)
         if len(uniqs_of_last_scan) > 0:
-            logging.info("Portfolio \"{}\"({}) has {} records removed from last last scan.".format(
-                port_name, today_date.strftime('%y-%m-%d'), len(uniqs_of_last_scan)))
             mysql_helper.delete_from_table(target_mysql_table,
                                            col_val_dict={
                                                'portfolio': port_name,
                                                'record_date': today_date,
                                                'uniqueness': uniqs_of_last_scan,
                                            })
+            cnt = 0
             for prev_record in previous_scanned_records:
-                if prev_record[-1] not in uniqs_of_last_scan:
-                    continue
                 if is_in(prev_record, records):
                     continue
                 record_derived = list(prev_record)[:-1]
                 # lone becomes lone_close, short becomes short_close
-                record_derived[4] = record_derived[4] + "_close"
+                record_derived[__type_idx] = record_derived[__type_idx] + "_close"
                 temp_record_for_uniq_calc = record_derived[:]
-                temp_record_for_uniq_calc[2] = None  # vol_percent should not be included into uniqueness calculation
+                # vol_percent should not be included into uniqueness calculation
+                temp_record_for_uniq_calc[__vol_percent_idx] = None
                 record_derived.append(utility.compute_uniqueness_str(*temp_record_for_uniq_calc))
                 mysql_helper.insert_one_record('portfolio_operations',
                                                col_names=col_names, values=record_derived, suppress_duplicate=True)
+                cnt = cnt + 1
+            logging.info("Portfolio \"{}\"({}) has {} records removed from last last scan.".format(
+                port_name, today_date.strftime('%y-%m-%d'), cnt))
         else:
-            logging.info("Portfolio \"%s\"(%s) did not change from last scan.",
-                         port_name, today_date.strftime('%y-%m-%d'))
+            logging.info("Portfolio \"{}\"({}) has {} records removed from last last scan.".format(
+                port_name, today_date.strftime('%y-%m-%d'), 0))
     else:
         for one_record in records:
             mysql_helper.insert_one_record(target_mysql_table, col_names=col_names, values=one_record,
@@ -337,7 +366,20 @@ def selenium_chrome(output: str = None,
 def deduplicate(mysql_helper: mysql_related.MySqlHelper):
     if not isinstance(mysql_helper, mysql_related.MySqlHelper):
         raise ValueError("mysql_helper must be instance of mysql_related.MySqlHelper")
-    stmt_format = """
+    dedup1_stmt_format = """
+    DELETE t1 FROM {0} t1
+      INNER JOIN {0} t2
+    WHERE t1.portfolio = t2.portfolio
+      AND t1.symbol = t2.symbol
+      AND t1.date_added = t2.date_added
+      AND t1.type != t2.type
+      AND t1.record_date = t2.record_date
+      AND ROUND(t1.price, 2) = ROUND(t2.price, 2);
+    """
+    deduplicate1_operations = dedup1_stmt_format.format("portfolio_operations")
+    mysql_helper.execute_update(deduplicate1_operations)
+
+    dedup2_stmt_format = """
     DELETE t1  FROM {0} t1
       INNER JOIN {0} t2
     WHERE t1.id < t2.id
@@ -347,10 +389,10 @@ def deduplicate(mysql_helper: mysql_related.MySqlHelper):
       AND t1.type = t2.type
       AND t1.record_date = t2.record_date;
     """
-    deduplicate_operations = stmt_format.format("portfolio_operations")
-    deduplicate_scan = stmt_format.format("portfolio_scan")
-    mysql_helper.execute_update(deduplicate_operations)
-    mysql_helper.execute_update(deduplicate_scan)
+    deduplicate2_operations = dedup2_stmt_format.format("portfolio_operations")
+    deduplicate2_scan = dedup2_stmt_format.format("portfolio_scan")
+    mysql_helper.execute_update(deduplicate2_operations)
+    mysql_helper.execute_update(deduplicate2_scan)
     logging.info("de-duplication executed correctly")
 
 

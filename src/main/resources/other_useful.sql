@@ -21,7 +21,25 @@ WHERE t1.id < t2.id
   AND t1.type = t2.type
   AND t1.record_date = t2.record_date;
 
-  -- deduplication sql
+SELECT t1.id, t1.portfolio, t1.symbol, t1.vol_percent, t1.date_added, t1.type, t1.price, t1.record_date FROM portfolio_operations t1
+  INNER JOIN portfolio_operations t2
+WHERE t1.portfolio = t2.portfolio
+  AND t1.symbol = t2.symbol
+  AND t1.date_added = t2.date_added
+  AND t1.type != t2.type
+  AND t1.record_date = t2.record_date
+  AND ROUND(t1.price, 3) = ROUND(t2.price, 3);
+
+-- deduplication sql
+DELETE t1 FROM portfolio_operations t1
+  INNER JOIN portfolio_operations t2
+WHERE t1.portfolio = t2.portfolio
+  AND t1.symbol = t2.symbol
+  AND t1.date_added = t2.date_added
+  AND t1.type != t2.type
+  AND t1.record_date = t2.record_date
+  AND ROUND(t1.price, 3) = ROUND(t2.price, 3);
+
 DELETE t1  FROM portfolio_operations t1
   INNER JOIN portfolio_operations t2
 WHERE t1.id < t2.id

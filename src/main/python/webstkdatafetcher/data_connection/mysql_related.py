@@ -39,7 +39,6 @@ class MySqlHelper:
                 cnx.close()
 
 
-
     def execute_update(self, stmt: str, values=None, schema: str = None,
                        callback_on_cursor: Callable[[CMySQLCursor], None] = None,
                        multi=False,

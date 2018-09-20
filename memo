@@ -33,6 +33,7 @@
 select * from zacks.portfolio_scan;
 select * from zacks.portfolio_operations;
 select * from zacks.portfolio_scan where record_date = CURDATE();
+select * from zacks.portfolio_operations where record_date = CURDATE();
 
 ## TODO
 Add mysql data deduplication, because records in additions might not have price data at beginning, later it would be
@@ -46,6 +47,7 @@ mysqldump --user=${user} --password=${password} --host=${host} --complete-insert
 mysqldump --user=${user} --password=${password} --host=${host} --complete-insert ${database} > ./${database}.sql
 
 ## reload db backups
+use zacks;
 source /home/boweiliu/workrepo/WebStockDataFetcher/zacks.sql
 
 ## drop db
