@@ -30,12 +30,16 @@
 
 
 ## some mysql commands:
-select * from portfolio_scan;
-select * from portfolio_operations;
+select * from zacks.portfolio_scan;
+select * from zacks.portfolio_operations;
+select * from zacks.portfolio_scan where record_date = CURDATE();
 
 ## TODO
 Add mysql data deduplication, because records in additions might not have price data at beginning, later it would be
 added in webpage. Which will have two additions of same symbol, same day, same portfolio, similar vol_percent,
+
+## login to mysql
+mysql --user=${user} --password=${password} --host=${host}
 
 ## backup dbs
 mysqldump --user=${user} --password=${password} --host=${host} --complete-insert ${database} portfolio_operations > ./portfolio_operations.sql
