@@ -1,5 +1,6 @@
 from typing import List, Set, Dict
 
+import logging
 from selenium import webdriver
 # from selenium.webdriver.common.by import By
 # from selenium.webdriver.support.ui import WebDriverWait
@@ -117,7 +118,7 @@ def __process_rows_of_table(driver, mysql_helper: mysql_related.MySqlHelper,
                       price,
                       today_date]
         one_record_line = record_format.format(*one_record)
-        print(operation, one_record_line)
+        logging.info("%s %s", operation, one_record_line)
         temp_record_for_uniq_calc = one_record[:]
         temp_record_for_uniq_calc[2] = None  # vol_percent should not be included into uniqueness calculation
         one_record.append(utility.compute_uniqueness_str(*temp_record_for_uniq_calc))
@@ -147,7 +148,7 @@ def __process_rows_of_table(driver, mysql_helper: mysql_related.MySqlHelper,
 
         # at this time, uniq_checksums left belongs to those trades which have been deleted from current portfolio
         if len(uniqs_of_last_scan) > 0:
-            print("Portfolio \"{}\"({}) has {} records removed from last last scan.".format(
+            logging.info("Portfolio \"{}\"({}) has {} records removed from last last scan.".format(
                 port_name, today_date.strftime('%y-%m-%d'), len(uniqs_of_last_scan)))
             mysql_helper.delete_from_table(target_mysql_table,
                                            col_val_dict={
@@ -169,8 +170,8 @@ def __process_rows_of_table(driver, mysql_helper: mysql_related.MySqlHelper,
                 mysql_helper.insert_one_record('portfolio_operations',
                                                col_names=col_names, values=record_derived, suppress_duplicate=True)
         else:
-            print("Portfolio \"{}\"({}) did not change from last scan.".format(
-                port_name, today_date.strftime('%y-%m-%d')))
+            logging.info("Portfolio \"%s\"(%s) did not change from last scan.",
+                         port_name, today_date.strftime('%y-%m-%d'))
     else:
         for one_record in records:
             mysql_helper.insert_one_record(target_mysql_table, col_names=col_names, values=one_record,
@@ -252,11 +253,11 @@ def selenium_chrome(output: str = None,
 
         input_password.send_keys(credentials["password"])
         input_password.submit()
-        print("submitted ultimate login form")
+        logging.info("submitted ultimate login form")
         sleep(3)  # so page can be fully rendered
         try:
             driver.find_element_by_css_selector("#accept_cookie").click()
-            print("accepted cookie.")
+            logging.info("accepted cookie.")
         except NoSuchElementException:
             pass
         service_links = driver.find_elements_by_css_selector("#ts_sidebar section#zacks_services a")
@@ -265,7 +266,6 @@ def selenium_chrome(output: str = None,
             if not link.get_attribute("textContent"):
                 raise ValueError("link.text should not be evaluated as false")
             service_name_vs_url[link.get_attribute("textContent").lower()] = link.get_attribute("href")
-            # print("{}, link href: {}".format(link.get_attribute("textContent"), link.get_attribute("href")))
 
         interested_portfolios = [
             "Home Run Investor",
@@ -281,7 +281,7 @@ def selenium_chrome(output: str = None,
             "Black Box Trader"
         ]
         if not interested_portfolios or not len(interested_portfolios):
-            print("no interested portfolio selected")
+            logging.error("no interested portfolio selected")
             return
 
         for int_port in interested_portfolios:
@@ -290,13 +290,13 @@ def selenium_chrome(output: str = None,
         # record_date means the date this record generated
         header = "{}\t{}\t{}\t{}\t{}\t{}\t{}".format(
             "portfolio", "symbol", "vol_percent", "date_added", "type", "price", "record_date")
-        print(header)
+        logging.info(header)
         if output_file is not None:
             output_file.write(header + "\n")
 
         for int_port in interested_portfolios:
             # visit specified portfolio
-            print("now visiting url {}".format(service_name_vs_url[int_port.lower()]))
+            logging.info("now visiting url {}".format(service_name_vs_url[int_port.lower()]))
             driver.get(service_name_vs_url[int_port.lower()])
             sleep(2)
             head_tr = driver.find_element_by_css_selector("table#port_sort thead tr")
@@ -331,7 +331,7 @@ def selenium_chrome(output: str = None,
             output_file.close()
         mysql_helper.set_reuse_connection(False)
         deduplicate(mysql_helper)
-    print("selenium_chrome ends normally.")
+    logging.info("selenium_chrome ends normally.")
 
 
 def deduplicate(mysql_helper: mysql_related.MySqlHelper):
@@ -351,7 +351,7 @@ def deduplicate(mysql_helper: mysql_related.MySqlHelper):
     deduplicate_scan = stmt_format.format("portfolio_scan")
     mysql_helper.execute_update(deduplicate_operations)
     mysql_helper.execute_update(deduplicate_scan)
-    print("de-duplication executed correctly")
+    logging.info("de-duplication executed correctly")
 
 
 def __determine_trade_type(tds: List[WebElement], header_vs_col_idx: Dict[str, int]):

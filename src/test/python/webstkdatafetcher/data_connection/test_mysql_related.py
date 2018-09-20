@@ -1,7 +1,7 @@
 import unittest
 from webstkdatafetcher.data_connection import mysql_related
 
-from datetime import date, datetime
+from datetime import date
 
 from webstkdatafetcher import utility
 
@@ -50,9 +50,9 @@ class TestMysqlRelatedModule(unittest.TestCase):
             mysql_helper.insert_one_record(target_portfolio, col_val_dict=col_val_dict)
 
             mysql_helper.select_from(target_portfolio,
-                                col_val_dict=col_val_dict,
-                                callback_on_cursor=temp,
-                                result_collect=results)
+                                     col_val_dict=col_val_dict,
+                                     callback_on_cursor=temp,
+                                     result_collect=results)
             print(results)
             self.assertEqual(1, len(results))
 

@@ -36,3 +36,13 @@ select * from portfolio_operations;
 ## TODO
 Add mysql data deduplication, because records in additions might not have price data at beginning, later it would be
 added in webpage. Which will have two additions of same symbol, same day, same portfolio, similar vol_percent,
+
+## backup dbs
+mysqldump --user=${user} --password=${password} --host=${host} --complete-insert ${database} portfolio_operations > ./portfolio_operations.sql
+mysqldump --user=${user} --password=${password} --host=${host} --complete-insert ${database} > ./${database}.sql
+
+## reload db backups
+source /home/boweiliu/workrepo/WebStockDataFetcher/zacks.sql
+
+## drop db
+mysql --user=${user} --password=${password} --host=${host} -e "DROP DATABASE zacks;"

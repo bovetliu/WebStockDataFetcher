@@ -1,4 +1,5 @@
 from typing import List, Callable, Set
+import logging
 import mysql.connector
 from mysql.connector.cursor_cext import CMySQLCursor
 from mysql.connector import errorcode
@@ -11,26 +12,45 @@ class MySqlHelper:
 
     def __init__(self, db_config_dict: dict = None, reuse_connection=False):
         if not db_config_dict:
-            print('db_config_dict not supplied, going to use default db prop')
+            logging.warning('db_config_dict not supplied, going to use default db prop')
             db_config_dict = utility.get_propdict_file(constants.default_db_prop_path)
         if not isinstance(db_config_dict, dict):
             raise ValueError("db_config_dict should be supplied")
         self.__user = db_config_dict['user']
         self.__password = db_config_dict['password']
         self.__host = db_config_dict['host']
-        print("MySqlHelper#__init__(), host : {}".format(self.__host))
+        logging.info("MySqlHelper#__init__(), host : {}".format(self.__host))
         self.__database = db_config_dict['database']
         self.__reuse_connection = reuse_connection
         self.__cnx = None
 
+        # in case if it is a new run
+        cnx = None
+        cursor = None
+        try:
+            cnx = mysql.connector.connect(user=self.__user, password=self.__password, host=self.__host)
+            cursor = cnx.cursor()
+            cursor.execute(
+                "CREATE DATABASE IF NOT EXISTS {} DEFAULT CHARACTER SET 'utf8'".format(self.__database))
+        finally:
+            if cursor:
+                cursor.close()
+            if cnx:
+                cnx.close()
+
+
+
     def execute_update(self, stmt: str, values=None, schema: str = None,
-                       callback_on_cursor: Callable[[CMySQLCursor], None] = None, *args, **kwarg):
+                       callback_on_cursor: Callable[[CMySQLCursor], None] = None,
+                       multi=False,
+                       *args, **kwarg):
         """
         for UPDATE, INSERT, DELETE statements
         :param stmt: statement string
         :param values values
         :param schema: schema name
         :param callback_on_cursor callback on cursor
+        :param multi whether cursor is enable to execute multiple sql statements at one time
         :return: how many records are affected
         """
         if not schema:
@@ -50,11 +70,14 @@ class MySqlHelper:
                 self.__cnx = cnx
 
             cursor = cnx.cursor()
-            print("stmt: {}".format(stmt))
-            if values:
-                cursor.execute(stmt, values if isinstance(values, tuple) else tuple(values))
+            if logging.getLogger().isEnabledFor(logging.DEBUG):
+                logging.debug("stmt: %s", stmt)
             else:
-                cursor.execute(stmt)
+                logging.info("stmt: %s", stmt[:10])
+            if values:
+                cursor.execute(stmt, values if isinstance(values, tuple) else tuple(values), multi=multi)
+            else:
+                cursor.execute(stmt, multi=multi)
             if callable(callback_on_cursor):
                 callback_on_cursor(cursor, *args, **kwarg)
             elif stmt.lower().strip().startswith("select ") and not callback_on_cursor:
@@ -65,11 +88,11 @@ class MySqlHelper:
                     row = cursor.fetchone()
         except mysql.connector.Error as err:
             if err.errno == errorcode.ER_ACCESS_DENIED_ERROR:
-                print("Something is wrong with your user name or password")
+                logging.error("Something is wrong with your user name or password")
             elif err.errno == errorcode.ER_BAD_DB_ERROR:
-                print("Database does not exist")
+                logging.error("Database does not exist")
             else:
-                print(err)
+                logging.error(err)
             raise err
         finally:
             if cursor:
