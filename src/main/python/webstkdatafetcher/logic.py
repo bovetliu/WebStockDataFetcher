@@ -1,4 +1,4 @@
-from typing import List, Callable
+from typing import List, Set, Dict
 
 from selenium import webdriver
 # from selenium.webdriver.common.by import By
@@ -38,9 +38,11 @@ def __table_header_name_remap(header: str):
         return header.lower()
 
 
-def __process_rows_of_table(
-        driver, operation, trs, port_name: str, header_vs_col_idx,
-        callback_on_record_line: Callable[[List], None] = None, *args, **kwarg):
+def __process_rows_of_table(driver, mysql_helper: mysql_related.MySqlHelper,
+                            operation: str,
+                            trs: List[WebElement],
+                            port_name: str,
+                            header_vs_col_idx):
     if not isinstance(driver, WebDriver):
         raise TypeError("driver can only be instance of WebDriver")
     if operation not in ["additions", "deletions", "scan"]:
@@ -49,6 +51,23 @@ def __process_rows_of_table(
         if not isinstance(tr, WebElement):
             raise TypeError("trs can only be a list of WebElement")
     symbol_temp = ''
+
+    previous_scanned_records = []
+    uniqs_of_last_scan = []
+
+    selected_cols = ['portfolio', 'symbol', 'vol_percent', 'date_added', 'type', 'price', 'record_date', 'uniqueness']
+    if operation == 'scan':
+        mysql_helper.select_from("portfolio_scan", None, selected_cols,
+                                 col_val_dict={
+                                     'record_date': date.today(),
+                                     'portfolio': port_name
+                                 },
+                                 callback_on_cursor=mysql_related.MySqlHelper.default_select_collector,
+                                 result_holder=previous_scanned_records)
+        uniqs_of_last_scan = set([record[-1] for record in previous_scanned_records])
+
+    records = []
+    today_date = date.today()
     for tr in trs:
         # td in one line
         tds = tr.find_elements_by_tag_name("td")
@@ -75,17 +94,62 @@ def __process_rows_of_table(
                 price = None
         except ValueError:
                 price = round(float(price_text.replace(',', '')), 2)
-        arguments = [port_name, symbol_temp,
-                     round(float(tds[header_vs_col_idx['vol_percent']].text.strip('%')) / 100.0, 4)
-                     if 'vol_percent' in header_vs_col_idx else None,
-                     datetime.strptime(tds[header_vs_col_idx['date']].text, '%m/%d/%y').date(),
-                     trade_type,
-                     price,
-                     date.today()]
-        one_record_line = record_format.format(*arguments)
+        one_record = [port_name,
+                      symbol_temp,
+                      round(float(tds[header_vs_col_idx['vol_percent']].text.strip('%')) / 100.0, 4)
+                      if 'vol_percent' in header_vs_col_idx else None,
+                      datetime.strptime(tds[header_vs_col_idx['date']].text, '%m/%d/%y').date(),
+                      trade_type,
+                      price,
+                      today_date]
+        one_record_line = record_format.format(*one_record)
         print(operation, one_record_line)
-        if callback_on_record_line:
-            callback_on_record_line(arguments, *args, **kwarg)
+        one_record.append(utility.compute_uniqueness_str(*one_record))
+        records.append(one_record)
+
+    target_mysql_table = 'portfolio_scan' if operation == 'scan' else 'portfolio_operations'
+    col_names = ["portfolio", "symbol", "vol_percent", "date_added", "type", "price", "record_date", "uniqueness"]
+
+    if operation == 'scan':
+        for one_record in records:
+            if one_record[-1] in uniqs_of_last_scan:
+                uniqs_of_last_scan.remove(one_record[-1])
+            else:
+                # this means that in previous scan, this record was not inserted, it is INIT operation
+                mysql_helper.insert_one_record(target_mysql_table,
+                                               col_names=col_names, values=one_record, suppress_duplicate=True)
+                record_derived = one_record[:-1]
+                # lone becomes lone_init, short becomes short_init
+                record_derived[5] = record_derived[5] + "_init"
+                record_derived.append(utility.compute_uniqueness_str(*record_derived))
+                mysql_helper.insert_one_record('portfolio_operations',
+                                               col_names=col_names, values=record_derived, suppress_duplicate=True)
+
+        # at this time, uniq_checksums left belongs to those trades which have been deleted from current portfolio
+        if len(uniqs_of_last_scan) > 0:
+            print("Portfolio \"{}\"({}) has {} records removed from last last scan.".format(
+                port_name, today_date.strftime('%y-%m-%d'), len(uniqs_of_last_scan)))
+            mysql_helper.delete_from_table(target_mysql_table,
+                                           col_val_dict={
+                                               'portfolio': port_name,
+                                               'record_date': today_date,
+                                               'uniqueness': uniqs_of_last_scan,
+                                           })
+            for prev_record in previous_scanned_records:
+                if prev_record[-1] not in uniqs_of_last_scan:
+                    continue
+                record_derived = list(prev_record)[:-1]
+                record_derived[5] = record_derived[5] + "_close"
+                record_derived.append(utility.compute_uniqueness_str(*record_derived))
+                mysql_helper.insert_one_record('portfolio_operations',
+                                               col_names=col_names, values=record_derived, suppress_duplicate=True)
+        else:
+            print("Portfolio \"{}\"({}) did not change from last scan.".format(
+                port_name, today_date.strftime('%y-%m-%d')))
+    else:
+        for one_record in records:
+            mysql_helper.insert_one_record(target_mysql_table, col_names=col_names, values=one_record,
+                                           suppress_duplicate=True)
 
 
 def handle_zacks_email(email_content: str):
@@ -229,14 +293,11 @@ def selenium_chrome(output: str = None,
                         td.click()
 
             trs = driver.find_elements_by_css_selector("table#port_sort tbody tr")
-            __process_rows_of_table(driver, "scan", trs, int_port,
-                                    header_vs_col_idx, insert_record, mysql_helper, 'portfolio_scan')
+            __process_rows_of_table(driver, mysql_helper, "scan", trs, int_port, header_vs_col_idx)
             trs = driver.find_elements_by_css_selector("#ts_content section.deletions tbody tr")
-            __process_rows_of_table(driver, "deletions", trs, int_port,
-                                    header_vs_col_idx, insert_record, mysql_helper, 'portfolio_operations')
+            __process_rows_of_table(driver, mysql_helper, "deletions", trs, int_port, header_vs_col_idx)
             trs = driver.find_elements_by_css_selector("#ts_content section.additions tbody tr")
-            __process_rows_of_table(driver, "additions", trs, int_port,
-                                    header_vs_col_idx, insert_record, mysql_helper, 'portfolio_operations')
+            __process_rows_of_table(driver, mysql_helper, "additions", trs, int_port, header_vs_col_idx)
     finally:
         if driver is not None:
             driver.get("https://www.zacks.com/logout.php")
@@ -246,16 +307,6 @@ def selenium_chrome(output: str = None,
         mysql_helper.set_reuse_connection(False)
         deduplicate(mysql_helper)
     print("selenium_chrome ends normally.")
-
-
-# noinspection PyUnusedLocal
-def insert_record(records: List, *args, **kwargs):
-    mysql_helper = args[0]
-    tgt_table = args[1]
-    col_names = ["portfolio", "symbol", "vol_percent", "date_added", "type", "price", "record_date", "uniqueness"]
-    uniq = utility.compute_uniqueness_str(*records)
-    records.append(uniq)
-    mysql_helper.insert_one_record(tgt_table, col_names=col_names, values=records, suppress_duplicate=True)
 
 
 def deduplicate(mysql_helper: mysql_related.MySqlHelper):
@@ -278,5 +329,5 @@ def deduplicate(mysql_helper: mysql_related.MySqlHelper):
     print("de-duplication executed correctly")
 
 
-def __determine_trade_type(tds, header_vs_col_idx):
+def __determine_trade_type(tds: List[WebElement], header_vs_col_idx: Dict[str, int]):
     return tds[header_vs_col_idx['type']].text.lower() if 'type' in header_vs_col_idx else 'long'

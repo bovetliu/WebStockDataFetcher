@@ -1,4 +1,4 @@
-from typing import List, Callable
+from typing import List, Callable, Set
 import mysql.connector
 from mysql.connector.cursor_cext import CMySQLCursor
 from mysql.connector import errorcode
@@ -107,28 +107,41 @@ class MySqlHelper:
             else:
                 raise err
 
-    def delete_table(self, table: str, schema: str=None, col_val_dict: dict = None):
+    def delete_from_table(self, table: str, schema: str=None, col_val_dict: dict = None):
         if not schema:
             schema = self.__database
         if not table:
             raise ValueError("table should be supplied")
         small_equal_conditions = []
         if col_val_dict:
-            for col_name in col_val_dict.keys():
+            for col_name, values in col_val_dict.items():
+                source = col_name
                 if col_name == 'vol_percent' or col_name == 'price':
-                    small_equal_conditions.append("ROUND({}, 6) = %s".format(col_name))
-                else:
-                    small_equal_conditions.append("{} = %s".format(col_name))
+                    source = "ROUND({}, 6)".format(col_name)
+                operation = "="
+                if isinstance(values, List) or isinstance(values, Set):
+                    operation = "IN"
+                target = "%s"
+                if isinstance(values, List) or isinstance(values, Set):
+                    target = "(" + ', '.join(['%s'] * len(values)) + ")"
+                small_equal_conditions.append("{} {} {}".format(source, operation, target))
         where = " AND ".join(small_equal_conditions)
         if where:
             delete_statements = "DELETE FROM `{}`.`{}` WHERE {}".format(schema, table, where)
         else:
             delete_statements = "DELETE FROM `{}`.`{}`".format(schema, table)
-        self.execute_update(delete_statements, tuple(col_val_dict.values()))
+        values = []
+        for val in col_val_dict.values():
+            if isinstance(val, List) or isinstance(val, Set):
+                for v in val:
+                    values.append(v)
+            else:
+                values.append(val)
+        self.execute_update(delete_statements, tuple(values))
 
-    def select(self, table, schema=None, col_names=None,
-               col_val_dict: dict=None,
-               callback_on_cursor: Callable[[CMySQLCursor], None] = None,  *args, **kwarg):
+    def select_from(self, table, schema=None, col_names: List[str] = None,
+                    col_val_dict: dict = None,
+                    callback_on_cursor: Callable[[CMySQLCursor], None] = None, *args, **kwarg):
         if not schema:
             schema = self.__database
 
@@ -163,3 +176,15 @@ class MySqlHelper:
             if self.__cnx:
                 self.__cnx.close()
                 self.__cnx = None
+
+    @classmethod
+    def default_select_collector(cls, cursor, result_holder: List = None, *args, **kwargs):
+        if result_holder is None:
+            if len(args) > 0:
+                result_holder = args[0]
+            else:
+                result_holder = kwargs["result_holder"]
+        row = cursor.fetchone()
+        while row is not None:
+            result_holder.append(row[0] if len(row) == 1 else row)
+            row = cursor.fetchone()

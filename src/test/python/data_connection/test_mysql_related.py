@@ -45,11 +45,11 @@ class TestMysqlRelatedModule(unittest.TestCase):
                         row = cursor.fetchone()
                     print("there is/are {} results returned.".format(len(result_collect)))
 
-            mysql_helper.select(target_portfolio, callback_on_cursor=temp, result_collect=results)
+            mysql_helper.select_from(target_portfolio, callback_on_cursor=temp, result_collect=results)
             initial_num = len(results)
             mysql_helper.insert_one_record(target_portfolio, col_val_dict=col_val_dict)
 
-            mysql_helper.select(target_portfolio,
+            mysql_helper.select_from(target_portfolio,
                                 col_val_dict=col_val_dict,
                                 callback_on_cursor=temp,
                                 result_collect=results)
@@ -64,8 +64,9 @@ class TestMysqlRelatedModule(unittest.TestCase):
                 else:
                     print("Caught excepted error : {}".format(err.msg))
             mysql_helper.insert_one_record(target_portfolio, col_val_dict=col_val_dict, suppress_duplicate=True)
-            mysql_helper.delete_table(target_portfolio, col_val_dict=col_val_dict)
-            mysql_helper.select(target_portfolio, callback_on_cursor=temp, result_collect=results)
+            col_val_dict['uniqueness'] = {col_val_dict['uniqueness'], 'abc', 'asdfsaw', 'vxcvzxqqwe'}
+            mysql_helper.delete_from_table(target_portfolio, col_val_dict=col_val_dict)
+            mysql_helper.select_from(target_portfolio, callback_on_cursor=temp, result_collect=results)
             self.assertEqual(initial_num, len(results))
         finally:
             mysql_helper.set_reuse_connection(False)
