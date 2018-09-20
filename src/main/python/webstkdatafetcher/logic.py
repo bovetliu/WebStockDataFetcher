@@ -38,6 +38,20 @@ def __table_header_name_remap(header: str):
         return header.lower()
 
 
+def is_in(one_record, records):
+    for that_record in records:
+        if is_same_trade(one_record, that_record):
+            return True
+    return False
+
+
+def is_same_trade(curr_record, prev_record):
+    if curr_record is prev_record:
+        return True
+    return (curr_record[0] == prev_record[0]) and (curr_record[1] == prev_record[1]) and \
+           (curr_record[3] == prev_record[3]) and (curr_record[4] == prev_record[4])
+
+
 def __process_rows_of_table(driver, mysql_helper: mysql_related.MySqlHelper,
                             operation: str,
                             trs: List[WebElement],
@@ -104,13 +118,15 @@ def __process_rows_of_table(driver, mysql_helper: mysql_related.MySqlHelper,
                       today_date]
         one_record_line = record_format.format(*one_record)
         print(operation, one_record_line)
-        one_record.append(utility.compute_uniqueness_str(*one_record))
+        temp_record_for_uniq_calc = one_record[:]
+        temp_record_for_uniq_calc[2] = None  # vol_percent should not be included into uniqueness calculation
+        one_record.append(utility.compute_uniqueness_str(*temp_record_for_uniq_calc))
         records.append(one_record)
 
     target_mysql_table = 'portfolio_scan' if operation == 'scan' else 'portfolio_operations'
     col_names = ["portfolio", "symbol", "vol_percent", "date_added", "type", "price", "record_date", "uniqueness"]
 
-    if operation == 'scan':
+    if operation == 'scan' and len(previous_scanned_records) > 0:
         for one_record in records:
             if one_record[-1] in uniqs_of_last_scan:
                 uniqs_of_last_scan.remove(one_record[-1])
@@ -118,12 +134,16 @@ def __process_rows_of_table(driver, mysql_helper: mysql_related.MySqlHelper,
                 # this means that in previous scan, this record was not inserted, it is INIT operation
                 mysql_helper.insert_one_record(target_mysql_table,
                                                col_names=col_names, values=one_record, suppress_duplicate=True)
-                record_derived = one_record[:-1]
-                # lone becomes lone_init, short becomes short_init
-                record_derived[5] = record_derived[5] + "_init"
-                record_derived.append(utility.compute_uniqueness_str(*record_derived))
-                mysql_helper.insert_one_record('portfolio_operations',
-                                               col_names=col_names, values=record_derived, suppress_duplicate=True)
+                # only when date_added is today can be correct
+                if one_record[3] == today_date and not is_in(one_record, previous_scanned_records):
+                    record_derived = one_record[:-1]
+                    # lone becomes lone_init, short becomes short_init
+                    record_derived[4] = record_derived[4] + "_init"
+                    temp_record_for_uniq_calc = record_derived[:]
+                    temp_record_for_uniq_calc[2] = None  # vol_percent should'nt be included into uniqueness calculation
+                    record_derived.append(utility.compute_uniqueness_str(*temp_record_for_uniq_calc))
+                    mysql_helper.insert_one_record('portfolio_operations',
+                                                   col_names=col_names, values=record_derived, suppress_duplicate=True)
 
         # at this time, uniq_checksums left belongs to those trades which have been deleted from current portfolio
         if len(uniqs_of_last_scan) > 0:
@@ -138,9 +158,14 @@ def __process_rows_of_table(driver, mysql_helper: mysql_related.MySqlHelper,
             for prev_record in previous_scanned_records:
                 if prev_record[-1] not in uniqs_of_last_scan:
                     continue
+                if is_in(prev_record, records):
+                    continue
                 record_derived = list(prev_record)[:-1]
-                record_derived[5] = record_derived[5] + "_close"
-                record_derived.append(utility.compute_uniqueness_str(*record_derived))
+                # lone becomes lone_close, short becomes short_close
+                record_derived[4] = record_derived[4] + "_close"
+                temp_record_for_uniq_calc = record_derived[:]
+                temp_record_for_uniq_calc[2] = None  # vol_percent should not be included into uniqueness calculation
+                record_derived.append(utility.compute_uniqueness_str(*temp_record_for_uniq_calc))
                 mysql_helper.insert_one_record('portfolio_operations',
                                                col_names=col_names, values=record_derived, suppress_duplicate=True)
         else:

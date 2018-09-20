@@ -79,4 +79,12 @@ WHERE t1.id < t2.id
   AND t1.type = t2.type
   AND t1.record_date = t2.record_date;
 
+DELETE t1 FROM portfolio_operations t1
+INNER JOIN portfolio_operations t2
+    WHERE t1.portfolio = t2.portfolio
+      AND t1.symbol = t2.symbol
+      AND t1.date_added = t2.date_added
+      AND t1.type != t2.type
+      AND t1.record_date = t2.record_date;
+
 -- ALTER TABLE portfolio_operations MODIFY price FLOAT NULL;
