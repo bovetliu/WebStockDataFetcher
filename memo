@@ -34,10 +34,21 @@ select * from zacks.portfolio_scan;
 select * from zacks.portfolio_operations;
 select * from zacks.portfolio_scan where record_date = CURDATE();
 select * from zacks.portfolio_operations where record_date = CURDATE();
+DELETE from zacks.portfolio_scan where record_date = CURDATE();
+DELETE from zacks.portfolio_operations where record_date = CURDATE();
+
+
+## some useful combo
+source ./src/main/resources/remotedb.properties
+mysql --user=${user} --password=${password} --host=${host} \
+  -e "select * from zacks.portfolio_operations where record_date = CURDATE()"
+
+source ./src/main/resources/database.properties
+mysql --user=${user} --password=${password} --host=${host} \
+  -e "select * from zacks.portfolio_operations where record_date = CURDATE()"
 
 ## TODO
-Add mysql data deduplication, because records in additions might not have price data at beginning, later it would be
-added in webpage. Which will have two additions of same symbol, same day, same portfolio, similar vol_percent,
+more testable refactoring
 
 ## login to mysql
 mysql --user=${user} --password=${password} --host=${host}
