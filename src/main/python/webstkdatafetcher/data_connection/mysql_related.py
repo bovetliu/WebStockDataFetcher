@@ -28,7 +28,9 @@ class MySqlHelper:
         cnx = None
         cursor = None
         try:
-            cnx = mysql.connector.connect(user=self.__user, password=self.__password, host=self.__host)
+            cnx = mysql.connector.connect(user=self.__user, password=self.__password,
+                                          host=self.__host,
+                                          connection_timeout=10000)
             cursor = cnx.cursor()
             cursor.execute(
                 "CREATE DATABASE IF NOT EXISTS {} DEFAULT CHARACTER SET 'utf8'".format(self.__database))
@@ -37,7 +39,6 @@ class MySqlHelper:
                 cursor.close()
             if cnx:
                 cnx.close()
-
 
     def execute_update(self, stmt: str, values=None, schema: str = None,
                        callback_on_cursor: Callable[[CMySQLCursor], None] = None,
@@ -56,50 +57,60 @@ class MySqlHelper:
             schema = self.__database
         cnx = None
         cursor = None
-        try:
-            if self.__reuse_connection and self.__cnx and self.__cnx.is_connected():
-                cnx = self.__cnx
+        retry = 0
+        need_retry = True  # this should be set to True, so following while loop can execute at least once
+        while retry < 3 and need_retry:
+            try:
+                need_retry = False  # set need_retry back to False
+                if self.__reuse_connection and self.__cnx and self.__cnx.is_connected():
+                    cnx = self.__cnx
+                else:
+                    cnx = mysql.connector.connect(user=self.__user,
+                                                  password=self.__password,
+                                                  database=schema,
+                                                  host=self.__host,
+                                                  connection_timeout=10000)
+                if self.__reuse_connection:
+                    self.__cnx = cnx
 
-            else:
-                cnx = mysql.connector.connect(user=self.__user,
-                                              password=self.__password,
-                                              database=schema,
-                                              host=self.__host)
-            if self.__reuse_connection:
-                self.__cnx = cnx
-
-            cursor = cnx.cursor()
-            if logging.getLogger().isEnabledFor(logging.DEBUG):
-                logging.debug("stmt: %s", stmt)
-            else:
-                logging.info("stmt: %s", stmt[:10])
-            if values:
-                cursor.execute(stmt, values if isinstance(values, tuple) else tuple(values), multi=multi)
-            else:
-                cursor.execute(stmt, multi=multi)
-            if callable(callback_on_cursor):
-                callback_on_cursor(cursor, *args, **kwarg)
-            elif stmt.lower().strip().startswith("select ") and not callback_on_cursor:
-                # service as default callback
-                row = cursor.fetchone()
-                while row is not None:
-                    print(row)
+                cursor = cnx.cursor()
+                if logging.getLogger().isEnabledFor(logging.DEBUG):
+                    logging.debug("stmt: %s", stmt)
+                else:
+                    logging.info("stmt: %s", stmt[:10])
+                cursor.execute("SET SESSION MAX_EXECUTION_TIME=7000;")
+                if values:
+                    cursor.execute(stmt, values if isinstance(values, tuple) else tuple(values), multi=multi)
+                else:
+                    cursor.execute(stmt, multi=multi)
+                if callable(callback_on_cursor):
+                    callback_on_cursor(cursor, *args, **kwarg)
+                elif stmt.lower().strip().startswith("select ") and not callback_on_cursor:
+                    # service as default callback
                     row = cursor.fetchone()
-        except mysql.connector.Error as err:
-            if err.errno == errorcode.ER_ACCESS_DENIED_ERROR:
-                logging.error("Something is wrong with your user name or password")
-            elif err.errno == errorcode.ER_BAD_DB_ERROR:
-                logging.error("Database does not exist")
-            else:
-                logging.error(err)
-            raise err
-        finally:
-            if cursor:
-                cursor.close()
-            if cnx:
-                cnx.commit()
-                if not self.__reuse_connection:
-                    cnx.close()
+                    while row is not None:
+                        print(row)
+                        row = cursor.fetchone()
+            except mysql.connector.Error as err:
+                if err.errno == errorcode.ER_QUERY_TIMEOUT:
+                    logging.error("ER_QUERY_TIMEOUT")
+                    need_retry = True
+                if err.errno == errorcode.ER_ACCESS_DENIED_ERROR:
+                    logging.error("Something is wrong with your user name or password")
+                elif err.errno == errorcode.ER_BAD_DB_ERROR:
+                    logging.error("Database does not exist")
+                else:
+                    logging.error(err)
+                if not need_retry:
+                    raise err
+            finally:
+                retry = retry + 1
+                if cursor:
+                    cursor.close()
+                if cnx:
+                    cnx.commit()
+                    if not self.__reuse_connection:
+                        cnx.close()
 
     def insert_one_record(self, table: str, schema: str=None, col_val_dict: dict = None,
                           col_names: List[str] = None,
