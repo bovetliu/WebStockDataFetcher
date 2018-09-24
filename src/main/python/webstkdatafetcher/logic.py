@@ -89,19 +89,14 @@ def __process_rows_of_table(driver, mysql_helper: mysql_related.MySqlHelper,
     today_date = date.today()
     selected_cols = ['portfolio', 'symbol', 'vol_percent', 'date_added', 'type', 'price', 'record_date', 'uniqueness']
     if operation == 'scan':
-        # try fetch today, today - 1 ... today - 5
-        # if found records, break loop, this is to address issue #1
-        # One trade record has price 0 all day then become valid next day
-        for i in range(6):
-            mysql_helper.select_from("portfolio_scan", None, selected_cols,
-                                     col_val_dict={
-                                         'record_date': today_date - timedelta(days=i),
-                                         'portfolio': port_name
-                                     },
-                                     callback_on_cursor=mysql_related.MySqlHelper.default_select_collector,
-                                     result_holder=previous_scanned_records)
-            if len(previous_scanned_records) > 0:
-                break
+        mysql_helper.select_from("portfolio_scan", None, selected_cols,
+                                 col_val_dict={
+                                     'record_date': '(SELECT MAX(record_date) FROM zacks.portfolio_scan ' +
+                                                    '    WHERE portfolio = \'{}\')'.format(port_name),
+                                     'portfolio': port_name
+                                 },
+                                 callback_on_cursor=mysql_related.MySqlHelper.default_select_collector,
+                                 result_holder=previous_scanned_records)
         uniqs_of_last_scan = set([record[-1] for record in previous_scanned_records])
 
     records = []
@@ -202,6 +197,9 @@ def __process_rows_of_table(driver, mysql_helper: mysql_related.MySqlHelper,
             logging.info("Portfolio \"{}\"({}) has {} records removed from last last scan.".format(
                 port_name, today_date.strftime('%y-%m-%d'), 0))
     else:
+        if operation == 'scan':
+            logging.warn("operation: {}, len(previous_scanned_records): {}".format(
+                operation, len(previous_scanned_records)))
         for one_record in records:
             mysql_helper.insert_one_record(target_mysql_table, col_names=col_names, values=one_record,
                                            suppress_duplicate=True)
@@ -264,7 +262,7 @@ def selenium_chrome(output: str = None,
     driver = None
     output_file = None
     mysql_helper = mysql_related.MySqlHelper(reuse_connection=True, db_config_dict=db_config_dict)
-
+    should_commit = False
     try:
         if output:
             output_file = open(output, 'w+')
@@ -326,9 +324,22 @@ def selenium_chrome(output: str = None,
         for int_port in interested_portfolios:
             # visit specified portfolio
             logging.info("now visiting url {}".format(service_name_vs_url[int_port.lower()]))
-            driver.get(service_name_vs_url[int_port.lower()])
-            sleep(2)
-            head_tr = driver.find_element_by_css_selector("table#port_sort thead tr")
+            head_tr = None
+            # try visiting this page for at most three times.
+            for i in range(3):
+                if head_tr:
+                    # if head_tr is given valid value, no need to loop again
+                    break
+                try:
+                    driver.get(service_name_vs_url[int_port.lower()])
+                    sleep(3)
+                    # might not be able to find
+                    head_tr = driver.find_element_by_css_selector("table#port_sort thead tr")
+                except NoSuchElementException as noSuchElmEx:
+                    logging.error(noSuchElmEx.msg, "i : {}".format(i))
+
+            if not head_tr:
+                raise NoSuchElementException()
             ths_of_header_row = head_tr.find_elements_by_tag_name("th")
             header_vs_col_idx = {}
             for idx, th in enumerate(ths_of_header_row):
@@ -352,13 +363,14 @@ def selenium_chrome(output: str = None,
             __process_rows_of_table(driver, mysql_helper, "deletions", trs, int_port, header_vs_col_idx)
             trs = driver.find_elements_by_css_selector("#ts_content section.additions tbody tr")
             __process_rows_of_table(driver, mysql_helper, "additions", trs, int_port, header_vs_col_idx)
+        should_commit = True
     finally:
         if driver is not None:
             driver.get("https://www.zacks.com/logout.php")
             driver.close()
         if output_file is not None:
             output_file.close()
-        mysql_helper.set_reuse_connection(False)
+        mysql_helper.set_reuse_connection(False, should_commit)
         deduplicate(mysql_helper)
     logging.info("selenium_chrome ends normally.")
 

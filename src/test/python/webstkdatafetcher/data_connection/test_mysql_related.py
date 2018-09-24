@@ -73,3 +73,27 @@ class TestMysqlRelatedModule(unittest.TestCase):
             mysql_helper.execute_update(
                 "DELETE FROM {} WHERE symbol = '{}'".format(target_portfolio, values[1])
             )
+
+    def test_select_from_recent(self):
+        target_portfolio = "portfolio_scan"
+        results = []
+
+        def temp(cursor, *args, **kwarg):
+            row = cursor.fetchone()
+            if 'result_collect' in kwarg:
+                result_collect = kwarg['result_collect']
+                result_collect.clear()
+                while row is not None:
+                    result_collect.append(row)
+                    row = cursor.fetchone()
+                print("there is/are {} results returned.".format(len(result_collect)))
+        mysql_helper = mysql_related.MySqlHelper(reuse_connection=False)
+        col_val_dict = {
+            "record_date": "(SELECT MAX(record_date) FROM {})".format(target_portfolio),
+            "portfolio": "Large-Cap Trader"
+        }
+        mysql_helper.select_from(target_portfolio,col_val_dict=col_val_dict,
+                                 callback_on_cursor=temp, result_collect=results)
+        self.assertTrue(len(results) > 0)
+        for result in results:
+            self.assertEqual('Large-Cap Trader', result[1])

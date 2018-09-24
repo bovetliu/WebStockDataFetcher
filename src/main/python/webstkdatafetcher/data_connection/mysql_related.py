@@ -69,7 +69,8 @@ class MySqlHelper:
                                                   password=self.__password,
                                                   database=schema,
                                                   host=self.__host,
-                                                  connection_timeout=10000)
+                                                  connection_timeout=10000,
+                                                  autocommit=False)
                 if self.__reuse_connection:
                     self.__cnx = cnx
 
@@ -108,8 +109,8 @@ class MySqlHelper:
                 if cursor:
                     cursor.close()
                 if cnx:
-                    cnx.commit()
                     if not self.__reuse_connection:
+                        cnx.commit()
                         cnx.close()
 
     def insert_one_record(self, table: str, schema: str=None, col_val_dict: dict = None,
@@ -183,13 +184,20 @@ class MySqlHelper:
 
         cols = "*" if not col_names else ", ".join(col_names)
         small_equal_conditions = []
+        to_be_removed_keys = []
         if col_val_dict:
-            for col_name in col_val_dict.keys():
+            for col_name, col_val in col_val_dict.items():
                 if col_name == 'vol_percent' or col_name == 'price':
                     small_equal_conditions.append("ROUND({}, 6) = %s".format(col_name))
+                elif isinstance(col_val, str) and col_val.upper().startswith("(SELECT "):
+                    small_equal_conditions.append("{} = {}".format(col_name, col_val))
+                    to_be_removed_keys.append(col_name)
                 else:
                     small_equal_conditions.append("{} = %s".format(col_name))
         where = " AND ".join(small_equal_conditions)
+        if len(to_be_removed_keys):
+            for to_be_removed_key in to_be_removed_keys:
+                del col_val_dict[to_be_removed_key]
         if where:
             select_statements = "SELECT {} FROM `{}`.`{}` WHERE {}".format(cols, schema, table, where)
         else:
@@ -198,7 +206,7 @@ class MySqlHelper:
                             tuple(col_val_dict.values()) if col_val_dict else None,
                             callback_on_cursor=callback_on_cursor, *args, **kwarg)
 
-    def set_reuse_connection(self, reuse_connection):
+    def set_reuse_connection(self, reuse_connection, should_commit: bool=True):
         """
         NOT thread safe
         """
@@ -207,6 +215,8 @@ class MySqlHelper:
         self.__reuse_connection = reuse_connection
         if not reuse_connection:
             if self.__cnx:
+                if should_commit:
+                    self.__cnx.commit()
                 self.__cnx.close()
                 self.__cnx = None
 
