@@ -45,7 +45,9 @@ mysql --user=${user} --password=${password} --host=${host} \
 
 source ./src/main/resources/database.properties
 mysql --user=${user} --password=${password} --host=${host} \
-  -e "select * from zacks.portfolio_operations where record_date = CURDATE()"
+  -e "select * from zacks.portfolio_operations where record_date = (SELECT MAX(record_date) FROM zacks.portfolio_operations);"
+mysql --user=${user} --password=${password} --host=${host} \
+  -e "select * from zacks.portfolio_scan where record_date = (SELECT MAX(record_date) FROM zacks.portfolio_operations) ORDER BY portfolio AND symbol"
 
 ## TODO
 more testable refactoring
