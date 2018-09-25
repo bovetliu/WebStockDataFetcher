@@ -65,3 +65,7 @@ INNER JOIN portfolio_operations t2
       AND t1.date_added = t2.date_added
       AND t1.type != t2.type
       AND t1.record_date = t2.record_date;
+
+
+ALTER TABLE portfolio_operations
+  ADD COLUMN price_at_close FLOAT NULL AFTER uniqueness;

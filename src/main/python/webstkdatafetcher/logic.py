@@ -1,13 +1,13 @@
-from typing import List, Set, Dict
+from typing import List, Dict
 
 import logging
 from selenium import webdriver
 # from selenium.webdriver.common.by import By
 # from selenium.webdriver.support.ui import WebDriverWait
 # from selenium.webdriver.common.keys import Keys
-# from selenium.webdriver.support import expected_conditions as EC
+# from selenium.webdriver.support import expected_conditions
 from time import sleep
-from datetime import date, datetime, timedelta
+from datetime import date, datetime
 
 from selenium.webdriver.remote.webdriver import WebDriver
 from selenium.webdriver.remote.webelement import WebElement
@@ -31,12 +31,15 @@ __internal_header_mapping = {
     "Type": "type"   # only Counterstrike,  TAZR and shortlist have Type column
 }
 
+__latest_symbol_prices = {}
+
 __portfolio_idx = 0
 __symbol_idx = 1
 __vol_percent_idx = 2
 __date_added_idx = 3
 __type_idx = 4
 __price_idx = 5
+__record_date_idx = 6
 
 
 def __table_header_name_remap(header: str):
@@ -184,12 +187,21 @@ def __process_rows_of_table(driver, mysql_helper: mysql_related.MySqlHelper,
                 record_derived = list(prev_record)[:-1]
                 # lone becomes lone_close, short becomes short_close
                 record_derived[__type_idx] = record_derived[__type_idx] + "_close"
+                record_derived[__record_date_idx] = today_date
                 temp_record_for_uniq_calc = record_derived[:]
                 # vol_percent should not be included into uniqueness calculation
                 temp_record_for_uniq_calc[__vol_percent_idx] = None
                 record_derived.append(utility.compute_uniqueness_str(*temp_record_for_uniq_calc))
+                copied_col_names = col_names[:]
+                try:
+                    record_derived.append(get_stock_price(driver, record_derived[__symbol_idx]))
+                    copied_col_names.append('price_at_close')
+                except ValueError as ve:
+                    logging.error(str(ve))
                 mysql_helper.insert_one_record('portfolio_operations',
-                                               col_names=col_names, values=record_derived, suppress_duplicate=True)
+                                               col_names=copied_col_names,
+                                               values=record_derived,
+                                               suppress_duplicate=True)
                 cnt = cnt + 1
             logging.info("Portfolio \"{}\"({}) has {} records removed from last last scan.".format(
                 port_name, today_date.strftime('%y-%m-%d'), cnt))
@@ -198,11 +210,44 @@ def __process_rows_of_table(driver, mysql_helper: mysql_related.MySqlHelper,
                 port_name, today_date.strftime('%y-%m-%d'), 0))
     else:
         if operation == 'scan':
-            logging.warn("operation: {}, len(previous_scanned_records): {}".format(
+            logging.warning("operation: {}, len(previous_scanned_records): {}".format(
                 operation, len(previous_scanned_records)))
         for one_record in records:
+            if one_record[__type_idx].endswith("_close"):
+                try:
+                    one_record.append(get_stock_price(driver, one_record[__symbol_idx]))
+                    col_names.append('price_at_close')
+                except ValueError as ve:
+                    logging.error(str(ve))
             mysql_helper.insert_one_record(target_mysql_table, col_names=col_names, values=one_record,
                                            suppress_duplicate=True)
+
+
+def get_stock_price(driver, symbol):
+    """
+    parse html content, use symbol name to fetch lastest quote of one symbol
+
+    :param driver: web driver
+    :param symbol stock symbol, such as LMT, NVDA
+    :return: symbol latest quote price
+    """
+    if symbol in __latest_symbol_prices:
+        return __latest_symbol_prices[symbol]
+    latest_price = 0
+    for i in range(3):
+        if latest_price:
+            break
+        try:
+            driver.get("https://finance.yahoo.com/quote/" + symbol)
+            element = driver.find_element_by_css_selector(
+                "div#quote-header-info > div:nth-child(3) > div > div > span:first-child")
+            latest_price = float(element.text)
+        except NoSuchElementException:
+            continue
+    if not latest_price:
+        raise ValueError("could not fetch quote price for " + symbol)
+    __latest_symbol_prices[symbol] = latest_price
+    return latest_price
 
 
 def handle_zacks_email(email_content: str):

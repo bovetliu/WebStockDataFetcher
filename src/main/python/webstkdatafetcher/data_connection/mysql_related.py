@@ -137,6 +137,7 @@ class MySqlHelper:
             self.execute_update(insert_statement, values)
         except mysql.connector.Error as err:
             if err.errno == errorcode.ER_DUP_ENTRY and suppress_duplicate:
+                logging.warning(err.msg)
                 pass  # suppress_duplicate
             else:
                 raise err
