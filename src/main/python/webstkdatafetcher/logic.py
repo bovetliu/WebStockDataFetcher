@@ -449,7 +449,6 @@ def deduplicate(mysql_helper: mysql_related.MySqlHelper):
       AND t1.symbol = t2.symbol
       AND t1.date_added = t2.date_added
       AND t1.type != t2.type
-      AND t1.record_date = t2.record_date
       AND ROUND(t1.price, 2) = ROUND(t2.price, 2);
     """
     deduplicate1_operations = dedup1_stmt_format.format("portfolio_operations")
