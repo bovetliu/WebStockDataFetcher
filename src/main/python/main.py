@@ -36,7 +36,7 @@ if __name__ == "__main__":
 
     if usecase.startswith('scrapezacks'):
         logic.selenium_chrome(clear_previous_content=True,
-                              headless=True,
+                              headless=False,
                               db_config_dict=utility.get_propdict_file(db_config_path))
     elif usecase.startswith("deduplicate"):
         mysql_helper = mysql_related.MySqlHelper(db_config_dict=utility.get_propdict_file(db_config_path))

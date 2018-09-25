@@ -32,7 +32,8 @@
 ## some mysql commands:
 select * from zacks.portfolio_scan;
 select * from zacks.portfolio_operations;
-select * from zacks.portfolio_operations ORDER BY record_date DESC, id ASC;
+select id,portfolio,symbol,vol_percent,date_added,type,price,record_date,price_at_close
+  from zacks.portfolio_operations ORDER BY record_date DESC, id ASC;
 select * from zacks.portfolio_scan where record_date = CURDATE();
 select * from zacks.portfolio_operations where record_date = CURDATE();
 DELETE from zacks.portfolio_scan where record_date = CURDATE();

@@ -77,6 +77,7 @@ def __process_rows_of_table(driver, mysql_helper: mysql_related.MySqlHelper,
                             operation: str,
                             trs: List[WebElement],
                             port_name: str,
+                            port_url: str,
                             header_vs_col_idx):
     if not isinstance(driver, WebDriver):
         raise TypeError("driver can only be instance of WebDriver")
@@ -198,6 +199,8 @@ def __process_rows_of_table(driver, mysql_helper: mysql_related.MySqlHelper,
                     copied_col_names.append('price_at_close')
                 except ValueError as ve:
                     logging.error(str(ve))
+                finally:
+                    driver.get(port_url)
                 mysql_helper.insert_one_record('portfolio_operations',
                                                col_names=copied_col_names,
                                                values=record_derived,
@@ -213,13 +216,16 @@ def __process_rows_of_table(driver, mysql_helper: mysql_related.MySqlHelper,
             logging.warning("operation: {}, len(previous_scanned_records): {}".format(
                 operation, len(previous_scanned_records)))
         for one_record in records:
+            copied_col_names = col_names[:]
             if one_record[__type_idx].endswith("_close"):
                 try:
                     one_record.append(get_stock_price(driver, one_record[__symbol_idx]))
-                    col_names.append('price_at_close')
+                    copied_col_names.append('price_at_close')
                 except ValueError as ve:
                     logging.error(str(ve))
-            mysql_helper.insert_one_record(target_mysql_table, col_names=col_names, values=one_record,
+                finally:
+                    driver.get(port_url)
+            mysql_helper.insert_one_record(target_mysql_table, col_names=copied_col_names, values=one_record,
                                            suppress_duplicate=True)
 
 
@@ -340,17 +346,17 @@ def selenium_chrome(output: str = None,
             service_name_vs_url[link.get_attribute("textContent").lower()] = link.get_attribute("href")
 
         interested_portfolios = [
-            "Home Run Investor",
-            "Income Investor",
-            "Stocks Under $10",
-            "Value Investor",
-            "Technology",
-            "Large-Cap Trader",
+            # "Home Run Investor",
+            # "Income Investor",
+            # "Stocks Under $10",
+            # "Value Investor",
+            # "Technology",
+            # "Large-Cap Trader",
             "TAZR",
-            "Momentum Trader",
-            "Counterstrike",
-            "Insider Trader",
-            "Black Box Trader"
+            # "Momentum Trader",
+            # "Counterstrike",
+            # "Insider Trader",
+            # "Black Box Trader"
         ]
         if not interested_portfolios or not len(interested_portfolios):
             logging.error("no interested portfolio selected")
@@ -381,8 +387,9 @@ def selenium_chrome(output: str = None,
                     # might not be able to find
                     head_tr = driver.find_element_by_css_selector("table#port_sort thead tr")
                 except NoSuchElementException as noSuchElmEx:
-                    logging.error(noSuchElmEx.msg, "i : {}".format(i))
-
+                    logging.error("At i : {}, could not find target portfolio table by CSS selector: {}",
+                                  i, noSuchElmEx.msg)
+            port_url = driver.current_url
             if not head_tr:
                 raise NoSuchElementException()
             ths_of_header_row = head_tr.find_elements_by_tag_name("th")
@@ -392,22 +399,29 @@ def selenium_chrome(output: str = None,
                 header_vs_col_idx[table_column_header_name] = idx
 
             # click all "Details>>" of addition, deletion and Open Portfolio tables to load js
-            trs = driver.find_elements_by_css_selector("table.display tbody tr")
-            for tr in trs:
-                # td in one line
-                tds = tr.find_elements_by_tag_name("td")
-                for td in tds:
-                    if "Details" in td.text:
-                        # noinspection PyStatementEffect
-                        td.location_once_scrolled_into_view
-                        td.click()
+            for operation in ["additions", "deletions", "scan"]:
+                driver.get(port_url)
+                trs = driver.find_elements_by_css_selector("table.display tbody tr")
+                for tr in trs:
+                    # td in one line
+                    tds = tr.find_elements_by_tag_name("td")
+                    for td in tds:
+                        if "Details" in td.text:
+                            # noinspection PyStatementEffect
+                            td.location_once_scrolled_into_view
+                            td.click()
+                if operation == 'additions':
+                    trs = driver.find_elements_by_css_selector("#ts_content section.additions tbody tr")
+                elif operation == 'deletions':
+                    trs = driver.find_elements_by_css_selector("#ts_content section.deletions tbody tr")
+                elif operation == 'scan':
+                    trs = driver.find_elements_by_css_selector("table#port_sort tbody tr")
+                else:
+                    raise ValueError("{} is not recognized operation".format(operation))
+                __process_rows_of_table(driver, mysql_helper, operation, trs, int_port,
+                                        port_url=port_url,
+                                        header_vs_col_idx=header_vs_col_idx)
 
-            trs = driver.find_elements_by_css_selector("table#port_sort tbody tr")
-            __process_rows_of_table(driver, mysql_helper, "scan", trs, int_port, header_vs_col_idx)
-            trs = driver.find_elements_by_css_selector("#ts_content section.deletions tbody tr")
-            __process_rows_of_table(driver, mysql_helper, "deletions", trs, int_port, header_vs_col_idx)
-            trs = driver.find_elements_by_css_selector("#ts_content section.additions tbody tr")
-            __process_rows_of_table(driver, mysql_helper, "additions", trs, int_port, header_vs_col_idx)
         should_commit = True
     finally:
         if driver is not None:
