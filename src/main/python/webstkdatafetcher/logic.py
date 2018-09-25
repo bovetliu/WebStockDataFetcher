@@ -73,6 +73,18 @@ def is_same_trade(this_record, that_record):
            (this_record[__price_idx] == that_record[__price_idx])
 
 
+def __extract_price(price_text, num_of_decimal):
+    price_text = price_text.strip()
+    try:
+        if price_text:
+            price = round(float(price_text), num_of_decimal)
+        else:
+            price = None
+    except ValueError:
+        price = round(float(price_text.replace(',', '')), num_of_decimal)
+    return price
+
+
 def __process_rows_of_table(driver, mysql_helper: mysql_related.MySqlHelper,
                             operation: str,
                             trs: List[WebElement],
@@ -104,6 +116,7 @@ def __process_rows_of_table(driver, mysql_helper: mysql_related.MySqlHelper,
         uniqs_of_last_scan = set([record[-1] for record in previous_scanned_records])
 
     records = []
+    last_prices = []
     for tr in trs:
         # td in one line
         tds = tr.find_elements_by_tag_name("td")
@@ -121,29 +134,22 @@ def __process_rows_of_table(driver, mysql_helper: mysql_related.MySqlHelper,
         elif operation == 'additions':
             trade_type = trade_type + '_init'   # long_init short_init,  initialize long or short postion
 
-        price_text = tds[header_vs_col_idx['price']].text.strip()
-        record_format = "{}\t{}\t{}\t{}\t{}\t{}\t{}"
-        try:
-            if price_text:
-                price = round(float(price_text), 2)
-            else:
-                price = None
-        except ValueError:
-                price = round(float(price_text.replace(',', '')), 2)
         one_record = [port_name,
                       symbol_temp,
                       round(float(tds[header_vs_col_idx['vol_percent']].text.strip('%')) / 100.0, 4)
                       if 'vol_percent' in header_vs_col_idx else None,
                       datetime.strptime(tds[header_vs_col_idx['date']].text, '%m/%d/%y').date(),
                       trade_type,
-                      price,
+                      __extract_price(tds[header_vs_col_idx['price']].text, 2),
                       today_date]
+        record_format = "{}\t{}\t{}\t{}\t{}\t{}\t{}"
         one_record_line = record_format.format(*one_record)
         logging.info("%s %s", operation, one_record_line)
         temp_record_for_uniq_calc = one_record[:]
         temp_record_for_uniq_calc[2] = None  # vol_percent should not be included into uniqueness calculation
         one_record.append(utility.compute_uniqueness_str(*temp_record_for_uniq_calc))
         records.append(one_record)
+        last_prices.append(__extract_price(tds[header_vs_col_idx['last_price']].text, 2))
 
     target_mysql_table = 'portfolio_scan' if operation == 'scan' else 'portfolio_operations'
     col_names = ["portfolio", "symbol", "vol_percent", "date_added", "type", "price", "record_date", "uniqueness"]
@@ -158,7 +164,7 @@ def __process_rows_of_table(driver, mysql_helper: mysql_related.MySqlHelper,
                                                col_names=col_names, values=one_record, suppress_duplicate=True)
             # if current record is not among previous scan of this portfolio, and its record date is today
             # then it is a newly added record in open_portfolio
-            if not is_in(one_record, previous_scanned_records) and one_record[__date_added_idx] == today_date:
+            if not is_in(one_record, previous_scanned_records):
                 record_derived = one_record[:-1]
                 # lone becomes lone_init, short becomes short_init
                 record_derived[__type_idx] = record_derived[__type_idx] + "_init"
@@ -215,11 +221,11 @@ def __process_rows_of_table(driver, mysql_helper: mysql_related.MySqlHelper,
         if operation == 'scan':
             logging.warning("operation: {}, len(previous_scanned_records): {}".format(
                 operation, len(previous_scanned_records)))
-        for one_record in records:
+        for idx, one_record in enumerate(records):
             copied_col_names = col_names[:]
             if one_record[__type_idx].endswith("_close"):
                 try:
-                    one_record.append(get_stock_price(driver, one_record[__symbol_idx]))
+                    one_record.append(last_prices[idx])
                     copied_col_names.append('price_at_close')
                 except ValueError as ve:
                     logging.error(str(ve))
@@ -346,17 +352,17 @@ def selenium_chrome(output: str = None,
             service_name_vs_url[link.get_attribute("textContent").lower()] = link.get_attribute("href")
 
         interested_portfolios = [
-            # "Home Run Investor",
-            # "Income Investor",
-            # "Stocks Under $10",
-            # "Value Investor",
-            # "Technology",
-            # "Large-Cap Trader",
+            "Home Run Investor",
+            "Income Investor",
+            "Stocks Under $10",
+            "Value Investor",
+            "Technology",
+            "Large-Cap Trader",
             "TAZR",
-            # "Momentum Trader",
-            # "Counterstrike",
-            # "Insider Trader",
-            # "Black Box Trader"
+            "Momentum Trader",
+            "Counterstrike",
+            "Insider Trader",
+            "Black Box Trader"
         ]
         if not interested_portfolios or not len(interested_portfolios):
             logging.error("no interested portfolio selected")
@@ -399,17 +405,16 @@ def selenium_chrome(output: str = None,
                 header_vs_col_idx[table_column_header_name] = idx
 
             # click all "Details>>" of addition, deletion and Open Portfolio tables to load js
+            trs = driver.find_elements_by_css_selector("table.display tbody tr")
+            for tr in trs:
+                # td in one line
+                tds = tr.find_elements_by_tag_name("td")
+                for td in tds:
+                    if "Details" in td.text:
+                        # noinspection PyStatementEffect
+                        td.location_once_scrolled_into_view
+                        td.click()
             for operation in ["additions", "deletions", "scan"]:
-                driver.get(port_url)
-                trs = driver.find_elements_by_css_selector("table.display tbody tr")
-                for tr in trs:
-                    # td in one line
-                    tds = tr.find_elements_by_tag_name("td")
-                    for td in tds:
-                        if "Details" in td.text:
-                            # noinspection PyStatementEffect
-                            td.location_once_scrolled_into_view
-                            td.click()
                 if operation == 'additions':
                     trs = driver.find_elements_by_css_selector("#ts_content section.additions tbody tr")
                 elif operation == 'deletions':
