@@ -49,7 +49,7 @@ mysql --user=${user} --password=${password} --host=${host} \
 
 source ./src/main/resources/database.properties
 mysql --user=${user} --password=${password} --host=${host} \
-  -e "select * from zacks.portfolio_operations where record_date = (SELECT MAX(record_date) FROM zacks.portfolio_operations);"
+  -e "select * from zacks.portfolio_operations where record_date >= (SELECT DATE_SUB(MAX(record_date), INTERVAL 1 DAY) FROM zacks.portfolio_operations);"
 mysql --user=${user} --password=${password} --host=${host} \
   -e "select * from zacks.portfolio_scan where record_date = (SELECT MAX(record_date) FROM zacks.portfolio_scan) ORDER BY portfolio AND symbol"
 

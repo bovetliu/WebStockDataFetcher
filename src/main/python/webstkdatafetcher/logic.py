@@ -442,6 +442,8 @@ def selenium_chrome(output: str = None,
 def deduplicate(mysql_helper: mysql_related.MySqlHelper):
     if not isinstance(mysql_helper, mysql_related.MySqlHelper):
         raise ValueError("mysql_helper must be instance of mysql_related.MySqlHelper")
+
+    # remove those records having opposite operation, added at the same date, which might be added in an error
     dedup1_stmt_format = """
     DELETE t1 FROM {0} t1
       INNER JOIN {0} t2
@@ -454,6 +456,19 @@ def deduplicate(mysql_helper: mysql_related.MySqlHelper):
     deduplicate1_operations = dedup1_stmt_format.format("portfolio_operations")
     mysql_helper.execute_update(deduplicate1_operations)
 
+    # remove those operations (actually the same one, but its price might be modified later) which added earlier
+    dedup2_stmt_format = """
+    DELETE t1  FROM {0} t1
+      INNER JOIN {0} t2
+    WHERE t1.id < t2.id
+      AND t1.portfolio = t2.portfolio
+      AND t1.symbol = t2.symbol
+      AND t1.date_added = t2.date_added
+      AND t1.type = t2.type;
+    """
+    deduplicate2_operations = dedup2_stmt_format.format("portfolio_operations")
+    mysql_helper.execute_update(deduplicate2_operations)
+
     dedup2_stmt_format = """
     DELETE t1  FROM {0} t1
       INNER JOIN {0} t2
@@ -464,9 +479,7 @@ def deduplicate(mysql_helper: mysql_related.MySqlHelper):
       AND t1.type = t2.type
       AND t1.record_date = t2.record_date;
     """
-    deduplicate2_operations = dedup2_stmt_format.format("portfolio_operations")
     deduplicate2_scan = dedup2_stmt_format.format("portfolio_scan")
-    mysql_helper.execute_update(deduplicate2_operations)
     mysql_helper.execute_update(deduplicate2_scan)
     logging.info("de-duplication executed correctly")
 

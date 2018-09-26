@@ -1,7 +1,11 @@
 import unittest
 from datetime import date
-from webstkdatafetcher import logic
+from os.path import join
+
+from webstkdatafetcher import logic, constants, utility
 from selenium import webdriver
+
+from webstkdatafetcher.data_connection import mysql_related
 
 
 class TestLogicModule(unittest.TestCase):
@@ -44,3 +48,9 @@ class TestLogicModule(unittest.TestCase):
                 print("Latest quote {} : {}".format(symbol, price))
         finally:
             driver.close()
+
+    def test_deuplicate(self):
+        db_config_path = join(constants.main_resources, "database.properties")
+        mysql_helper = mysql_related.MySqlHelper(reuse_connection=False,
+                                                 db_config_dict=utility.get_propdict_file(db_config_path))
+        logic.deduplicate(mysql_helper)
