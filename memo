@@ -69,3 +69,9 @@ source /home/boweiliu/workrepo/WebStockDataFetcher/zacks.sql
 
 ## drop db
 mysql --user=${user} --password=${password} --host=${host} -e "DROP DATABASE zacks;"
+
+
+
+## create Read only user stock_app_data_fetcher
+grant select on zacks.* to 'stock_app_data_fetcher'@'%' identified by 'password';
+flush privileges;
