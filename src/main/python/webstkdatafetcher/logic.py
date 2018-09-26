@@ -362,7 +362,8 @@ def selenium_chrome(output: str = None,
             "Momentum Trader",
             "Counterstrike",
             "Insider Trader",
-            "Black Box Trader"
+            "Black Box Trader",
+            "Surprise Trader"
         ]
         if not interested_portfolios or not len(interested_portfolios):
             logging.error("no interested portfolio selected")
