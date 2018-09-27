@@ -107,7 +107,7 @@ def __process_rows_of_table(driver, mysql_helper: mysql_related.MySqlHelper,
     if operation == 'scan':
         mysql_helper.select_from("portfolio_scan", None, selected_cols,
                                  col_val_dict={
-                                     'record_date': '(SELECT MAX(record_date) FROM zacks.portfolio_scan ' +
+                                     'record_date': '(SELECT MAX(record_date) FROM portfolio_scan ' +
                                                     '    WHERE portfolio = \'{}\')'.format(port_name),
                                      'portfolio': port_name
                                  },

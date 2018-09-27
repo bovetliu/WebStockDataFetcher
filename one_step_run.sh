@@ -2,7 +2,7 @@
 
 exit_if_not_zero () {
   if ! [ $2 -eq 0 ]; then
-    echo "[seed_database.sh] $1 exited with status $2. $0 going to fail."
+    echo "[one_step_run.sh] $1 exited with status $2. $0 going to fail."
     exit 1
   fi
 }
@@ -16,11 +16,12 @@ if [ ! -f ./credentials ]; then
     exit 9
 fi
 
-if ! [ $# -eq 1 ]
+if [ "$#" -gt 2 ] || [ "$#" -lt 1 ]
   then
-    echo "No arguments supplied"
-    echo "usage: one_step_run.sh <use_case>"
+    echo "Number of arguments incorrect"
+    echo "usage: one_step_run.sh <use_case> <optional_database_name: default zacks>"
     echo "accepted use_case can be \"scrapezacks\", \"scrapezacks_to_remote\",\"email_content01\"."
+    echo "acceptable database_name: any valid MySQL database name"
     exit 1
 fi
 
@@ -46,4 +47,4 @@ fi
 pip3 install --upgrade pip
 pip3 install -r ./requirements.txt > /dev/null
 exit_if_not_zero "pip install requirements" $?
-python3 src/main/python/main.py "$1"
+python3 src/main/python/main.py "$1" "$2"

@@ -13,10 +13,15 @@ if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO, stream=sys.stdout)
 
     # execute only if run as a script
-    if len(sys.argv) != 2:
-        print("usage: python3 src/main/python/main.py <usage>")
+    if len(sys.argv) > 3:
+        print("usage: python3 src/main/python/main.py <usage> <optional_database_name: default zacks>")
         print("acceptable usage: scrapezacks, scrapezacks_to_remote, email_content01")
+        print("acceptable database_name: any valid MySQL database name")
         exit(1)
+    non_default_db_name = None
+    if len(sys.argv) == 3:
+        non_default_db_name = sys.argv[2]
+        logging.info("non_default_db_name: {}".format(non_default_db_name))
     usecase = sys.argv[1]
     logging.info("usecase: {}".format(usecase))
 
@@ -24,12 +29,17 @@ if __name__ == "__main__":
         db_config_path = join(constants.main_resources, "remotedb.properties")
     else:
         db_config_path = join(constants.main_resources, "database.properties")
+    db_config_dict = utility.get_propdict_file(db_config_path)
+    if non_default_db_name:
+        db_config_dict["database"] = non_default_db_name
 
     if usecase.startswith('scrapezacks') or usecase.startswith('deduplicate') or usecase == 'db_initialize':
-        mysql_helper = mysql_related.MySqlHelper(db_config_dict=utility.get_propdict_file(db_config_path))
-        db_initialization_statments = \
-            utility.get_content_of_file(join(constants.main_resources, "db_initialization.sql")).split(";")
-        for stmt in db_initialization_statments:
+        db_initialization_str = utility.get_content_of_file(join(constants.main_resources, "db_initialization.sql"))
+        if non_default_db_name:
+            db_initialization_str = db_initialization_str.replace("zacks", non_default_db_name)
+        db_initialization_statements = db_initialization_str.split(";")
+        mysql_helper = mysql_related.MySqlHelper(db_config_dict=db_config_dict)
+        for stmt in db_initialization_statements:
             stmt = stmt.strip()
             if stmt:
                 mysql_helper.execute_update(stmt, multi=True)
@@ -37,9 +47,9 @@ if __name__ == "__main__":
     if usecase.startswith('scrapezacks'):
         logic.selenium_chrome(clear_previous_content=True,
                               headless=True,
-                              db_config_dict=utility.get_propdict_file(db_config_path))
+                              db_config_dict=db_config_dict)
     elif usecase.startswith("deduplicate"):
-        mysql_helper = mysql_related.MySqlHelper(db_config_dict=utility.get_propdict_file(db_config_path))
+        mysql_helper = mysql_related.MySqlHelper(db_config_dict=db_config_dict)
         logic.deduplicate(mysql_helper)
     elif usecase == 'email_content01':
         email01_path = join(constants.test_resources, 'sample_email01.html')
@@ -47,5 +57,6 @@ if __name__ == "__main__":
     elif usecase == 'db_initialize':
         pass
     else:
-        print("usage: python3 src/main/python/main.py <usage>")
+        print("usage: python3 src/main/python/main.py <usage> <optional_database_name: default zacks>")
         print("acceptable usage: scrapezacks, scrapezacks_to_remote, email_content01")
+        print("acceptable database_name: any valid MySQL database name")
