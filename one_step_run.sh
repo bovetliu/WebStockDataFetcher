@@ -16,7 +16,7 @@ if [ ! -f ./credentials ]; then
     exit 9
 fi
 
-if [ "$#" -gt 2 ] || [ "$#" -lt 1 ]
+if [ "$#" -gt 3 ] || [ "$#" -lt 1 ]
   then
     echo "Number of arguments incorrect"
     echo "usage: one_step_run.sh <use_case> <optional_database_name: default zacks>"
