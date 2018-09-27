@@ -421,7 +421,7 @@ def selenium_chrome(output: str = None,
                 elif operation == 'deletions':
                     trs = driver.find_elements_by_css_selector("#ts_content section.deletions tbody tr")
                 elif operation == 'scan':
-                    trs = driver.find_elements_by_css_selector("table#port_sort tbody tr")
+                    trs = driver.find_elements_by_css_selector("#ts_content section.portfolio.open table tbody tr")
                 else:
                     raise ValueError("{} is not recognized operation".format(operation))
                 __process_rows_of_table(driver, mysql_helper, operation, trs, int_port,
