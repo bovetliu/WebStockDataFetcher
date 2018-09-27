@@ -48,3 +48,13 @@ pip3 install --upgrade pip
 pip3 install -r ./requirements.txt > /dev/null
 exit_if_not_zero "pip install requirements" $?
 python3 src/main/python/main.py "$1" "$2"
+
+echo "last argument: ${@: -1}"
+if [ "${@: -1}" = "shutdown_after_execution" ]; then
+  if [ ${USER} != "ubuntu" ]; then
+    echo "It is like not running in AWS, because \$USER is not \"ubuntu\", will abort shutdown."
+    exit 9
+  fi
+  echo "going to shutdown instance in 3 minutes."
+  sudo shutdown -h +3
+fi
