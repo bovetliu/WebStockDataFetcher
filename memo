@@ -1,32 +1,19 @@
- Investor Collection, link href: https://www.zacks.com/investorcollection/
- ETF Investor, link href: https://www.zacks.com/etfinvestor/
- Home Run Investor, link href: https://www.zacks.com/homerun/
- Income Investor, link href: https://www.zacks.com/incomeinvestor/
- Stocks Under $10, link href: https://www.zacks.com/stocksunder10/
- Value Investor, link href: https://www.zacks.com/valueinvestor/
- Zacks Top 10, link href: https://www.zacks.com/top10/
- Blockchain, link href: https://www.zacks.com/blockchaininnovators/
- Healthcare, link href: https://www.zacks.com/healthcareinnovators/
- Technology, link href: https://www.zacks.com/technologyinnovators/
- Zacks Confidential, link href: https://www.zacks.com/confidential/
- Zacks Premium, link href: https://www.zacks.com/premium/
- Black Box Trader, link href: https://www.zacks.com/blackboxtrader/
- Counterstrike, link href: https://www.zacks.com/counterstrike/
- Insider Trader, link href: https://www.zacks.com/insidertrader/
- Large-Cap Trader, link href: https://www.zacks.com/largecaptrader/
- Momentum Trader, link href: https://www.zacks.com/momentumtrader/
- Options Trader, link href: https://www.zacks.com/optionstrader/
- Short List, link href: https://www.zacks.com/shortlist/
- Surprise Trader, link href: https://www.zacks.com/surprisetrader/
- TAZR, link href: https://www.zacks.com/tazr/
-
-
-
-
 ./one_step_run.sh scrapezacks
 
 ./one_step_run.sh scrapezacks_to_remote
 
+ssh -i /home/boweiliu/scripts/ib.pem ubuntu@13.58.185.130
+chrome running in aws ec2: 69.0.3497.100-1
+
+mkdir -p ~/bin
+cd ~/bin
+wget https://chromedriver.storage.googleapis.com/2.42/chromedriver_linux64.zip
+unzip ./chromedriver_linux64.zip
+rm ./chromedriver_linux64.zip
+mkdir -p ~/workrepo
+cd ~/workrepo
+git clone https://github.com/bovetliu/WebStockDataFetcher.git
+cd WebStockDataFetcher
 
 
 ## some mysql commands:
@@ -75,3 +62,28 @@ mysql --user=${user} --password=${password} --host=${host} -e "DROP DATABASE zac
 ## create Read only user stock_app_data_fetcher
 grant select on zacks.* to 'stock_app_data_fetcher'@'%' identified by 'password';
 flush privileges;
+
+
+
+ Investor Collection, link href: https://www.zacks.com/investorcollection/
+ ETF Investor, link href: https://www.zacks.com/etfinvestor/
+ Home Run Investor, link href: https://www.zacks.com/homerun/
+ Income Investor, link href: https://www.zacks.com/incomeinvestor/
+ Stocks Under $10, link href: https://www.zacks.com/stocksunder10/
+ Value Investor, link href: https://www.zacks.com/valueinvestor/
+ Zacks Top 10, link href: https://www.zacks.com/top10/
+ Blockchain, link href: https://www.zacks.com/blockchaininnovators/
+ Healthcare, link href: https://www.zacks.com/healthcareinnovators/
+ Technology, link href: https://www.zacks.com/technologyinnovators/
+ Zacks Confidential, link href: https://www.zacks.com/confidential/
+ Zacks Premium, link href: https://www.zacks.com/premium/
+ Black Box Trader, link href: https://www.zacks.com/blackboxtrader/
+ Counterstrike, link href: https://www.zacks.com/counterstrike/
+ Insider Trader, link href: https://www.zacks.com/insidertrader/
+ Large-Cap Trader, link href: https://www.zacks.com/largecaptrader/
+ Momentum Trader, link href: https://www.zacks.com/momentumtrader/
+ Options Trader, link href: https://www.zacks.com/optionstrader/
+ Short List, link href: https://www.zacks.com/shortlist/
+ Surprise Trader, link href: https://www.zacks.com/surprisetrader/
+ TAZR, link href: https://www.zacks.com/tazr/
+

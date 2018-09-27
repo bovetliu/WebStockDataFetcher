@@ -35,7 +35,9 @@ if [[ ${python_path} = *"/venv/bin/python3" ]]; then
 else
   if [ ! -d "./venv" ]; then
     python3 -m venv ./venv
-    exit_if_not_zero "creat_venv" $?
+    temp_exit_val=$?
+    sleep 5
+    exit_if_not_zero "creat_venv" ${temp_exit_val}
   fi
   echo "parent terminal not in venv. Going to enter venv"
   source ./venv/bin/activate
