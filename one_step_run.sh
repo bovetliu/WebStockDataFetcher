@@ -55,6 +55,10 @@ if [ "${@: -1}" = "shutdown_after_execution" ]; then
     echo "It is like not running in AWS, because \$USER is not \"ubuntu\", will abort shutdown."
     exit 9
   fi
-  echo "going to shutdown instance in 3 minutes."
-  sudo shutdown -h +3
+  echo "going to shutdown instance in 1 minute."
+  sudo shutdown -h +1
 fi
+
+# triggered by cloudwatch event
+# 0/20 13-22 ? * MON-FRI *
+# input {"region": "us-east-2", "operation": "start_instances"}

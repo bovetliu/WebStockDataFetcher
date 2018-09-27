@@ -2,7 +2,11 @@
 
 ./one_step_run.sh scrapezacks_to_remote
 
-ssh -i /home/boweiliu/scripts/ib.pem ubuntu@13.58.185.130
+./one_step_run.sh scrapezacks_to_remote zacks_from_ec2 shutdown_after_execution
+
+# 18.224.147.139 has crontab job
+# @reboot cd /home/ubuntu/workrepo/WebStockDataFetcher && sleep 60 && ./one_step_run.sh scrapezacks_to_remote zacks_from_ec2 shutdown_after_execution
+ssh -i /home/boweiliu/scripts/ib.pem ubuntu@18.224.147.139
 chrome running in aws ec2: 69.0.3497.100-1
 
 mkdir -p ~/bin
@@ -65,25 +69,25 @@ flush privileges;
 
 
 
- Investor Collection, link href: https://www.zacks.com/investorcollection/
- ETF Investor, link href: https://www.zacks.com/etfinvestor/
- Home Run Investor, link href: https://www.zacks.com/homerun/
- Income Investor, link href: https://www.zacks.com/incomeinvestor/
- Stocks Under $10, link href: https://www.zacks.com/stocksunder10/
- Value Investor, link href: https://www.zacks.com/valueinvestor/
- Zacks Top 10, link href: https://www.zacks.com/top10/
- Blockchain, link href: https://www.zacks.com/blockchaininnovators/
- Healthcare, link href: https://www.zacks.com/healthcareinnovators/
- Technology, link href: https://www.zacks.com/technologyinnovators/
- Zacks Confidential, link href: https://www.zacks.com/confidential/
- Zacks Premium, link href: https://www.zacks.com/premium/
- Black Box Trader, link href: https://www.zacks.com/blackboxtrader/
- Counterstrike, link href: https://www.zacks.com/counterstrike/
- Insider Trader, link href: https://www.zacks.com/insidertrader/
- Large-Cap Trader, link href: https://www.zacks.com/largecaptrader/
- Momentum Trader, link href: https://www.zacks.com/momentumtrader/
- Options Trader, link href: https://www.zacks.com/optionstrader/
- Short List, link href: https://www.zacks.com/shortlist/
- Surprise Trader, link href: https://www.zacks.com/surprisetrader/
- TAZR, link href: https://www.zacks.com/tazr/
+Investor Collection, link href: https://www.zacks.com/investorcollection/
+ETF Investor, link href: https://www.zacks.com/etfinvestor/
+Home Run Investor, link href: https://www.zacks.com/homerun/
+Income Investor, link href: https://www.zacks.com/incomeinvestor/
+Stocks Under $10, link href: https://www.zacks.com/stocksunder10/
+Value Investor, link href: https://www.zacks.com/valueinvestor/
+Zacks Top 10, link href: https://www.zacks.com/top10/
+Blockchain, link href: https://www.zacks.com/blockchaininnovators/
+Healthcare, link href: https://www.zacks.com/healthcareinnovators/
+Technology, link href: https://www.zacks.com/technologyinnovators/
+Zacks Confidential, link href: https://www.zacks.com/confidential/
+Zacks Premium, link href: https://www.zacks.com/premium/
+Black Box Trader, link href: https://www.zacks.com/blackboxtrader/
+Counterstrike, link href: https://www.zacks.com/counterstrike/
+Insider Trader, link href: https://www.zacks.com/insidertrader/
+Large-Cap Trader, link href: https://www.zacks.com/largecaptrader/
+Momentum Trader, link href: https://www.zacks.com/momentumtrader/
+Options Trader, link href: https://www.zacks.com/optionstrader/
+Short List, link href: https://www.zacks.com/shortlist/
+Surprise Trader, link href: https://www.zacks.com/surprisetrader/
+TAZR, link href: https://www.zacks.com/tazr/
 
