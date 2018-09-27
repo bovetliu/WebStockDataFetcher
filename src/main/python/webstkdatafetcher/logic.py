@@ -392,10 +392,10 @@ def selenium_chrome(output: str = None,
                     driver.get(service_name_vs_url[int_port.lower()])
                     sleep(3)
                     # might not be able to find
-                    head_tr = driver.find_element_by_css_selector("table#port_sort thead tr")
-                except NoSuchElementException as noSuchElmEx:
+                    head_tr = driver.find_element_by_css_selector("#ts_content section.portfolio.open table thead tr")
+                except NoSuchElementException:
                     logging.error("At i : {}, could not find target portfolio table by CSS selector: {}",
-                                  i, noSuchElmEx.msg)
+                                  i, "#ts_content section.portfolio.open table thead tr")
             port_url = driver.current_url
             if not head_tr:
                 raise NoSuchElementException()
