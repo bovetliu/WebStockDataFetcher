@@ -21,16 +21,16 @@ cd WebStockDataFetcher
 
 
 ## some mysql commands:
-select * from zacks.portfolio_scan;
-select * from zacks.portfolio_operations WHERE record_date >= '2018-09-21';
+select * from portfolio_scan;
+select * from portfolio_operations WHERE record_date >= '2018-09-21';
 select id,portfolio,symbol,vol_percent,date_added,type,price,record_date,price_at_close
   from zacks.portfolio_operations ORDER BY record_date DESC, id ASC;
-select * from zacks.portfolio_scan where record_date = CURDATE();
-select * from zacks.portfolio_operations where record_date = CURDATE();
+select * from portfolio_scan where record_date = CURDATE();
+select * from portfolio_operations where record_date = CURDATE();
 
 
-DELETE from zacks.portfolio_scan where record_date = CURDATE();
-DELETE from zacks.portfolio_operations where record_date = CURDATE();
+DELETE from portfolio_scan where record_date = CURDATE();
+DELETE from portfolio_operations where record_date = CURDATE();
 
 
 ## some useful combo
@@ -48,7 +48,14 @@ mysql --user=${user} --password=${password} --host=${host} \
 more testable refactoring
 
 ## login to mysql
+source ./src/main/resources/database.properties
 mysql --user=${user} --password=${password} --host=${host}
+USE zacks;
+
+source ./src/main/resources/remotedb.properties
+mysql --user=${user} --password=${password} --host=${host}
+USE zacks_from_ec2;
+
 
 ## backup dbs
 mysqldump --user=${user} --password=${password} --host=${host} --complete-insert ${database} portfolio_operations > ./portfolio_operations.sql
@@ -64,7 +71,8 @@ mysql --user=${user} --password=${password} --host=${host} -e "DROP DATABASE zac
 
 
 ## create Read only user stock_app_data_fetcher
-grant select on zacks.* to 'stock_app_data_fetcher'@'%' identified by 'password';
+GRANT SELECT ON zacks.* TO 'stock_app_data_fetcher'@'%' IDENTIFIED BY 'password';
+GRANT SELECT ON zacks_from_ec2.* to 'stock_app_data_fetcher'@'%';
 flush privileges;
 
 
