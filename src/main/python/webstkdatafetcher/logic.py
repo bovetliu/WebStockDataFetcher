@@ -452,7 +452,8 @@ def deduplicate(mysql_helper: mysql_related.MySqlHelper):
       AND t1.symbol = t2.symbol
       AND t1.date_added = t2.date_added
       AND t1.type != t2.type
-      AND ROUND(t1.price, 2) = ROUND(t2.price, 2);
+      AND (ISNULL(t1.price) OR (t1.price > -0.05 AND t1.price < 0.05)) 
+      AND (ISNULL(t2.price) OR (t2.price > -0.05 AND t2.price < 0.05));
     """
     deduplicate1_operations = dedup1_stmt_format.format("portfolio_operations")
     mysql_helper.execute_update(deduplicate1_operations)
@@ -466,6 +467,23 @@ def deduplicate(mysql_helper: mysql_related.MySqlHelper):
       AND t1.symbol = t2.symbol
       AND t1.date_added = t2.date_added
       AND t1.type = t2.type;
+    """
+    deduplicate2_operations = dedup2_stmt_format.format("portfolio_operations")
+    mysql_helper.execute_update(deduplicate2_operations)
+
+    # remove records like following:
+    # | 276 | Momentum Trader   | CDXS   |      0.1127 | 2018-09-26 | long_init  |     19 | 2018-09-27  | 2bd7e4f009b0a16c035d79a61cc02457 |           NULL |
+    # | 278 | Momentum Trader   | CDXS   |      0.1255 | 2018-09-26 | long_close |      0 | 2018-09-27  | d7b58fcc0712cc1e470e38f74fa635c0 |         17.375 |
+
+    dedup2_stmt_format = """
+    DELETE t1 FROM {0} t1
+      INNER JOIN {0} t2
+    WHERE t1.portfolio = t2.portfolio
+      AND t1.symbol = t2.symbol
+      AND t1.date_added = t2.date_added
+      AND t1.type != t2.type
+      AND (ISNULL(t1.price) OR (t1.price > -0.05 AND t1.price < 0.05))
+      AND t2.price > 0.05;
     """
     deduplicate2_operations = dedup2_stmt_format.format("portfolio_operations")
     mysql_helper.execute_update(deduplicate2_operations)
