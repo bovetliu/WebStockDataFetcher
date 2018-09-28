@@ -24,7 +24,7 @@ cd WebStockDataFetcher
 select * from portfolio_scan;
 select * from portfolio_operations WHERE record_date >= '2018-09-21';
 select id,portfolio,symbol,vol_percent,date_added,type,price,record_date,price_at_close
-  from zacks.portfolio_operations ORDER BY record_date DESC, id ASC;
+  from portfolio_operations ORDER BY record_date DESC, id ASC;
 select * from portfolio_scan where record_date = CURDATE();
 select * from portfolio_operations where record_date = CURDATE();
 
@@ -42,7 +42,7 @@ source ./src/main/resources/database.properties
 mysql --user=${user} --password=${password} --host=${host} \
   -e "select * from zacks.portfolio_operations where record_date >= (SELECT DATE_SUB(MAX(record_date), INTERVAL 1 DAY) FROM zacks.portfolio_operations);"
 mysql --user=${user} --password=${password} --host=${host} \
-  -e "select * from zacks.portfolio_scan where record_date = (SELECT MAX(record_date) FROM zacks.portfolio_scan) ORDER BY portfolio AND symbol"
+  -e "select * from zacks.portfolio_scan where record_date >= (SELECT DATE_SUB(MAX(record_date), INTERVAL 1 DAY) FROM zacks.portfolio_scan) ORDER BY portfolio AND symbol;"
 
 ## TODO
 more testable refactoring

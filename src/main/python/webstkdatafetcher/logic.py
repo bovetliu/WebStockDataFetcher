@@ -145,9 +145,8 @@ def __process_rows_of_table(driver, mysql_helper: mysql_related.MySqlHelper,
         record_format = "{}\t{}\t{}\t{}\t{}\t{}\t{}"
         one_record_line = record_format.format(*one_record)
         logging.info("%s %s", operation, one_record_line)
-        temp_record_for_uniq_calc = one_record[:]
-        temp_record_for_uniq_calc[2] = None  # vol_percent should not be included into uniqueness calculation
-        one_record.append(utility.compute_uniqueness_str(*temp_record_for_uniq_calc))
+        # vol_percent is now included in uniqueness generation
+        one_record.append(utility.compute_uniqueness_str(*one_record))
         records.append(one_record)
         last_prices.append(__extract_price(tds[header_vs_col_idx['last_price']].text, 2))
 
@@ -157,6 +156,8 @@ def __process_rows_of_table(driver, mysql_helper: mysql_related.MySqlHelper,
     if operation == 'scan' and len(previous_scanned_records) > 0:
         cnt = 0
         for one_record in records:
+            # since vol_percent is now included in uniqueness calculation, following insert will insert duplicated
+            # records, if vol_percent is different, but previous records will be removed in deduplication.
             if one_record[-1] in uniqs_of_last_scan:
                 uniqs_of_last_scan.remove(one_record[-1])
             else:
@@ -189,6 +190,7 @@ def __process_rows_of_table(driver, mysql_helper: mysql_related.MySqlHelper,
                                            })
             cnt = 0
             for prev_record in previous_scanned_records:
+                # this prev_record is actually the same trade recorded in records, do not generate _close
                 if is_in(prev_record, records):
                     continue
                 record_derived = list(prev_record)[:-1]
