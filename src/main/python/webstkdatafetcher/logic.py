@@ -70,7 +70,7 @@ def is_same_trade(this_record, that_record):
            (this_record[__symbol_idx] == that_record[__symbol_idx]) and \
            (this_record[__date_added_idx] == that_record[__date_added_idx]) and \
            (this_record[__type_idx] == that_record[__type_idx]) and \
-           (this_record[__price_idx] == that_record[__price_idx])
+           (abs(this_record[__price_idx] - that_record[__price_idx]) < 0.01)
 
 
 def __extract_price(price_text, num_of_decimal):
