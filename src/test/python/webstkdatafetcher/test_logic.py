@@ -160,7 +160,7 @@ class TestLogicModule(unittest.TestCase):
                                              ('vol_percent', None), ('date_added', fake_prev_record_date),
                                              ('type', 'long'), ('price', 277.35),
                                              ('record_date', fake_prev_record_date)])
-        self.update_record(one_new_long_position, "symbol", "NVDA")
+        TestLogicModule.update_record(one_new_long_position, "symbol", "NVDA")
         fake_new_scanned_records.append(one_new_long_position)
         returned = logic.process(fake_records_by_operation, fake_prev_portfolio, web_driver=driver)
         self.assertEqual(1, len(returned["portfolio_operations"]["insert"]))
@@ -209,7 +209,7 @@ class TestLogicModule(unittest.TestCase):
         fake_prev_record_date = fake_prev_portfolio[0]["record_date"]
         fake_cur_record_date = fake_prev_record_date + datetime.timedelta(days=1)
         for fake_new_scan_record in fake_new_scanned_records:
-            self.update_record(fake_new_scan_record, "record_date", fake_cur_record_date)
+            TestLogicModule.update_record(fake_new_scan_record, "record_date", fake_cur_record_date)
         returned = logic.process(fake_records_by_operation, fake_prev_portfolio, web_driver=driver)
         # print(returned["portfolio_operations"]["insert"])
         self.assertEqual([], returned["portfolio_operations"]["insert"])
@@ -240,7 +240,8 @@ class TestLogicModule(unittest.TestCase):
                                                  reuse_connection=False)
         return mysql_helper
 
-    def update_record(self, record, key, value):
+    @staticmethod
+    def update_record(record, key, value):
         if key not in record:
             raise KeyError("key: " + key + ", is not in record")
         record[key] = value

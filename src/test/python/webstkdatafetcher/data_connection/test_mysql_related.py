@@ -14,6 +14,49 @@ from mysql.connector import errorcode
 
 class TestMysqlRelatedModule(unittest.TestCase):
 
+    @staticmethod
+    def update_record(record, key, value):
+        if key not in record:
+            raise KeyError("key: " + key + ", is not in record")
+        record[key] = value
+        record["uniqueness"] = utility.compute_uniqueness_str(
+            *[record[key] for key in ['portfolio', 'symbol', 'vol_percent', 'date_added', 'type',
+                                      'price', 'record_date']])
+        return record
+
+    @unittest.skip("only use this method to quickly operate db")
+    def test_add(self):
+        target_table = "portfolio_scan"
+        db_prop_path = os.path.join(constants.main_resources, "database.properties")
+        utility.get_propdict_file(db_prop_path)
+        mysql_helper = mysql_related.MySqlHelper(db_config_dict=utility.get_propdict_file(db_prop_path),
+                                                 reuse_connection=False)
+        col_val_dict = {
+            "id": 2228,
+            "portfolio": "Counterstrike",
+            "symbol": "WTW",
+            "vol_percent": 0.0559,
+            "date_added": date(2018, 8, 13),
+            "type": 'long',
+            "price": 75.55,
+            "record_date": date(2018, 9, 28)
+        }
+        TestMysqlRelatedModule.update_record(col_val_dict, "symbol", "WTW")
+        mysql_helper.insert_one_record(target_table, None, col_val_dict)
+        col_val_dict = {
+            "id": 2229,
+            "portfolio": "Counterstrike",
+            "symbol": "WTW",
+            "vol_percent": 0.0559,
+            "date_added": date(2018, 8, 20),
+            "type": 'long',
+            "price": 72.1,
+            "record_date": date(2018, 9, 28)
+        }
+        TestMysqlRelatedModule.update_record(col_val_dict, "symbol", "WTW")
+        mysql_helper.insert_one_record(target_table, None, col_val_dict)
+
+
     def test_mysql_helper(self):
 
         target_portfolio = "portfolio_scan"
