@@ -415,7 +415,7 @@ def selenium_chrome(output: str = None,
                     # might not be able to find
                     head_tr = driver.find_element_by_css_selector("#ts_content section.portfolio.open table thead tr")
                 except NoSuchElementException:
-                    logging.error("At i : {}, could not find target portfolio table by CSS selector: {}",
+                    logging.error("At i : %s, could not find target portfolio table by CSS selector: %s",
                                   i, "#ts_content section.portfolio.open table thead tr")
             if not head_tr:
                 raise NoSuchElementException()
