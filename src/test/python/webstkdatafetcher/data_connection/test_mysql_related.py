@@ -1,9 +1,12 @@
 import unittest
+import os.path
+from collections import OrderedDict
+
 from webstkdatafetcher.data_connection import mysql_related
 
 from datetime import date
 
-from webstkdatafetcher import utility
+from webstkdatafetcher import utility, constants
 
 import mysql.connector
 from mysql.connector import errorcode
@@ -14,7 +17,10 @@ class TestMysqlRelatedModule(unittest.TestCase):
     def test_mysql_helper(self):
 
         target_portfolio = "portfolio_scan"
-        mysql_helper = mysql_related.MySqlHelper(reuse_connection=True)
+        db_prop_path = os.path.join(constants.main_resources, "database.properties")
+        utility.get_propdict_file(db_prop_path)
+        mysql_helper = mysql_related.MySqlHelper(db_config_dict=utility.get_propdict_file(db_prop_path),
+                                                 reuse_connection=True)
         values = ["test_portfolio",
                   "TEST",
                   0.034,
@@ -41,7 +47,9 @@ class TestMysqlRelatedModule(unittest.TestCase):
                     result_collect = kwarg['result_collect']
                     result_collect.clear()
                     while row is not None:
-                        result_collect.append(row)
+                        row_as_dcit = OrderedDict([(col_name, row[col_idx])
+                                                   for col_idx, col_name in enumerate(cursor.column_names)])
+                        result_collect.append(row_as_dcit)
                         row = cursor.fetchone()
                     print("there is/are {} results returned.".format(len(result_collect)))
 
@@ -55,7 +63,12 @@ class TestMysqlRelatedModule(unittest.TestCase):
                                      result_collect=results)
             print(results)
             self.assertEqual(1, len(results))
-
+            tgt_record = results[0]
+            prev_id = tgt_record["id"]
+            self.assertEqual(results[0]["portfolio"], 'test_portfolio')
+            self.assertEqual(results[0]["symbol"], 'TEST')
+            self.assertEqual(results[0]["vol_percent"], 0.034)
+            self.assertEqual(results[0]["date_added"], date(2018, 8, 6))
             try:
                 mysql_helper.insert_one_record(target_portfolio, col_val_dict=col_val_dict)
             except mysql.connector.Error as err:
@@ -63,8 +76,25 @@ class TestMysqlRelatedModule(unittest.TestCase):
                     raise err
                 else:
                     print("Caught excepted error : {}".format(err.msg))
+
+            # now test update
+            tgt_record['vol_percent'] = 0.03
+            mysql_helper.update_one_record(target_portfolio, col_val_dict=tgt_record)
+            mysql_helper.select_from(target_portfolio,
+                                     col_val_dict={"id": prev_id},
+                                     callback_on_cursor=temp,
+                                     result_collect=results)
+            self.assertEqual(1, len(results))
+            self.assertEqual(results[0]["id"], prev_id)
+            self.assertEqual(results[0]["portfolio"], 'test_portfolio')
+            self.assertEqual(results[0]["symbol"], 'TEST')
+            self.assertEqual(results[0]["vol_percent"], 0.03)
+            self.assertEqual(results[0]["date_added"], date(2018, 8, 6))
+
             mysql_helper.insert_one_record(target_portfolio, col_val_dict=col_val_dict, suppress_duplicate=True)
             col_val_dict['uniqueness'] = {col_val_dict['uniqueness'], 'abc', 'asdfsaw', 'vxcvzxqqwe'}
+
+            del col_val_dict["vol_percent"]
             mysql_helper.delete_from_table(target_portfolio, col_val_dict=col_val_dict)
             mysql_helper.select_from(target_portfolio, callback_on_cursor=temp, result_collect=results)
             self.assertEqual(initial_num, len(results))

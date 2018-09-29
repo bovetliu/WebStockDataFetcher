@@ -76,9 +76,9 @@ class MySqlHelper:
 
                 cursor = cnx.cursor()
                 if logging.getLogger().isEnabledFor(logging.DEBUG):
-                    logging.debug("stmt: %s", stmt)
+                    logging.debug("stmt: %s\n", stmt)
                 else:
-                    logging.info("stmt: %s", stmt[:10])
+                    logging.info("stmt: %s\n", stmt[:10])
                 cursor.execute("SET SESSION MAX_EXECUTION_TIME=7000;")
                 if values:
                     cursor.execute(stmt, values if isinstance(values, tuple) else tuple(values), multi=multi)
@@ -142,6 +142,42 @@ class MySqlHelper:
             else:
                 raise err
 
+    def update_one_record(self, table: str, schema: str=None, col_val_dict: dict = None,
+                          col_names: List[str] = None, values: List = None):
+        if not schema:
+            schema = self.__database
+        if (not isinstance(col_val_dict, dict)) and (not isinstance(col_names, list) or not isinstance(values, list)):
+            raise TypeError('Should either supply colname_val_dict or (colnames and values)')
+        if (col_names and not values) or (not col_names and values):
+            raise ValueError("colnames and values should both be supplied")
+        if col_names and len(col_names) != len(values):
+            raise ValueError("lengths of colnames and values should be equal.")
+        if (col_names is not None and "id" not in col_names) and \
+                (col_val_dict is not None and "id" not in col_val_dict):
+            raise ValueError("id not supplied")
+        if isinstance(col_val_dict, dict):
+            col_names = []
+            values = []
+            for key, value in col_val_dict.items():
+                col_names.append(key)
+                values.append(value)
+        assignment_list = []
+        query_params = []
+        id = -1
+        for i in range(len(col_names)):
+            if col_names[i] == 'id':
+                id = values[i]
+                continue
+            assignment_list.append(col_names[i] + " = %s")
+            query_params.append(values[i])
+        update_statement = "UPDATE `{}`.`{}` SET {} WHERE id = %s".format(schema,
+                                                                          table,
+                                                                          ", ".join(assignment_list))
+        if id == -1:
+            raise ValueError("at this time, id should not be -1")
+        query_params.append(id)
+        self.execute_update(update_statement, query_params)
+
     def delete_from_table(self, table: str, schema: str=None, col_val_dict: dict = None):
         if not schema:
             schema = self.__database
@@ -154,7 +190,7 @@ class MySqlHelper:
                 if col_name == 'vol_percent' or col_name == 'price':
                     source = "ROUND({}, 6)".format(col_name)
                 operation = "="
-                if isinstance(values, List) or isinstance(values, Set):
+                if isinstance(values, List) or isinstance(values, Set) or isinstance(values, tuple):
                     operation = "IN"
                 target = "%s"
                 if isinstance(values, List) or isinstance(values, Set):
