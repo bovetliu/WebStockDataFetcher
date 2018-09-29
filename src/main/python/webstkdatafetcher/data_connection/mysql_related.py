@@ -76,9 +76,9 @@ class MySqlHelper:
 
                 cursor = cnx.cursor()
                 if logging.getLogger().isEnabledFor(logging.DEBUG):
-                    logging.debug("stmt: %s\n", stmt)
+                    logging.debug("stmt: %s", stmt)
                 else:
-                    logging.info("stmt: %s\n", stmt[:10])
+                    logging.info("stmt: %s", stmt[:10])
                 cursor.execute("SET SESSION MAX_EXECUTION_TIME=7000;")
                 if values:
                     cursor.execute(stmt, values if isinstance(values, tuple) else tuple(values), multi=multi)

@@ -8,9 +8,10 @@ from selenium import webdriver
 # from selenium.webdriver.support import expected_conditions
 from time import sleep
 from datetime import date, datetime
+from collections import OrderedDict
+import operator
 
 from selenium.webdriver.remote.webdriver import WebDriver
-from selenium.webdriver.remote.webelement import WebElement
 from selenium.common.exceptions import NoSuchElementException
 
 from bs4 import BeautifulSoup
@@ -49,28 +50,24 @@ def __table_header_name_remap(header: str):
         return header.lower()
 
 
-def is_in(one_record, records):
-    for that_record in records:
-        if is_same_trade(one_record, that_record):
-            return True
-    return False
-
-
-def is_same_trade(this_record, that_record):
-    """
-    check whether portfolio, symbol, date_added, type and price are the same
-
-    :param this_record: one record
-    :param that_record: previous records
-    :return: true if portfolio, symbol, date_added, type and price of two trade records are the same, otherwise false.
-    """
-    if this_record is that_record:
-        return True
-    return (this_record[__portfolio_idx] == that_record[__portfolio_idx]) and \
-           (this_record[__symbol_idx] == that_record[__symbol_idx]) and \
-           (this_record[__date_added_idx] == that_record[__date_added_idx]) and \
-           (this_record[__type_idx] == that_record[__type_idx]) and \
-           (abs(this_record[__price_idx] - that_record[__price_idx]) < 0.01)
+def compare_trade(this_record, that_record, compare_price: bool = False, compare_vol_percent: bool = False):
+    attrs = ["portfolio", "symbol", "date_added", "type"]
+    for attr in attrs:
+        result = (this_record[attr] > that_record[attr]) - (this_record[attr] < that_record[attr])
+        if result != 0:
+            return result
+    if not compare_price and not compare_vol_percent:
+        return 0
+    if compare_price:
+        price_result = utility.null_safe_number_compare(this_record["price"], that_record["price"], 0.005)
+        if price_result != 0:
+            return price_result
+    if compare_vol_percent:
+        vol_percent_result = utility.null_safe_number_compare(
+            this_record["vol_percent"], that_record["vol_percent"], 0.00001)
+        if vol_percent_result != 0:
+            return vol_percent_result
+    return 0
 
 
 def __extract_price(price_text, num_of_decimal):
@@ -85,156 +82,67 @@ def __extract_price(price_text, num_of_decimal):
     return price
 
 
-def __process_rows_of_table(driver, mysql_helper: mysql_related.MySqlHelper,
-                            operation: str,
-                            trs: List[WebElement],
-                            port_name: str,
-                            port_url: str,
-                            header_vs_col_idx):
-    if not isinstance(driver, WebDriver):
-        raise TypeError("driver can only be instance of WebDriver")
-    if operation not in ["additions", "deletions", "scan"]:
-        raise ValueError("accepted operation can only be \"additions\" or \"deletions\"")
-    for tr in trs:
-        if not isinstance(tr, WebElement):
-            raise TypeError("trs can only be a list of WebElement")
+def tbody_html_to_records(tbody_content: str, header_vs_col_idx, operation: str, port_name: str,
+                          today_date: datetime.date) -> List[Dict]:
+
     symbol_temp = ''
-
-    previous_scanned_records = []
-    uniqs_of_last_scan = []
-    today_date = date.today()
-    selected_cols = ['portfolio', 'symbol', 'vol_percent', 'date_added', 'type', 'price', 'record_date', 'uniqueness']
-    if operation == 'scan':
-        mysql_helper.select_from("portfolio_scan", None, selected_cols,
-                                 col_val_dict={
-                                     'record_date': '(SELECT MAX(record_date) FROM portfolio_scan ' +
-                                                    '    WHERE portfolio = \'{}\')'.format(port_name),
-                                     'portfolio': port_name
-                                 },
-                                 callback_on_cursor=mysql_related.MySqlHelper.default_select_collector,
-                                 result_holder=previous_scanned_records)
-        uniqs_of_last_scan = set([record[-1] for record in previous_scanned_records])
-
     records = []
-    last_prices = []
+    soup = BeautifulSoup(tbody_content, 'html.parser')
+    trs = soup.find_all('tr')
     for tr in trs:
         # td in one line
-        tds = tr.find_elements_by_tag_name("td")
-        if "No Current Signal" in tds[0].text:
+        tds = tr.find_all('td')
+        if "No Current Signal" in str(tds[0]):
             continue
-        if tds[1].text:
-            symbol_temp = tds[1].text
-        if "Detail" in tds[3].text:
+        if tds[1].a and tds[1].a.span.string:
+            symbol_temp = tds[1].a.span.string.strip()
+        if "Detail" in str(tds[3]):
             continue
         # "portfolio name", "symbol", "vol_percent", "date", "type", "price"
 
-        trade_type = __determine_trade_type(tds, header_vs_col_idx)
+        trade_type = __determine_trade_type_bs4(tds, header_vs_col_idx)
         if operation == 'deletions':
             trade_type = trade_type + '_close'  # close long or short position
         elif operation == 'additions':
             trade_type = trade_type + '_init'   # long_init short_init,  initialize long or short postion
 
-        one_record = [port_name,
-                      symbol_temp,
-                      round(float(tds[header_vs_col_idx['vol_percent']].text.strip('%')) / 100.0, 4)
-                      if 'vol_percent' in header_vs_col_idx else None,
-                      datetime.strptime(tds[header_vs_col_idx['date']].text, '%m/%d/%y').date(),
-                      trade_type,
-                      __extract_price(tds[header_vs_col_idx['price']].text, 2),
-                      today_date]
+        one_record = OrderedDict([
+            ('portfolio', port_name),
+            ('symbol', symbol_temp),
+            ('vol_percent', round(float(tds[header_vs_col_idx['vol_percent']].string.strip().strip('%')) / 100.0, 4)
+                if 'vol_percent' in header_vs_col_idx else None),
+            ('date_added', datetime.strptime(tds[header_vs_col_idx['date']].string.strip(), '%m/%d/%y').date()),
+            ('type', trade_type),
+            ('price', __extract_price(tds[header_vs_col_idx['price']].string.strip(), 2)),
+            ('record_date', today_date),
+            ('last_price', __extract_price(tds[header_vs_col_idx['last_price']].string.strip(), 2)),
+        ])
+
         record_format = "{}\t{}\t{}\t{}\t{}\t{}\t{}"
-        one_record_line = record_format.format(*one_record)
+        one_record_values = list(one_record.values())
+        one_record_line = record_format.format(*one_record_values)
         logging.info("%s %s", operation, one_record_line)
-        # vol_percent is now included in uniqueness generation
-        one_record.append(utility.compute_uniqueness_str(*one_record))
+        one_record['uniqueness'] = utility.compute_uniqueness_str(*one_record_values)
         records.append(one_record)
-        last_prices.append(__extract_price(tds[header_vs_col_idx['last_price']].text, 2))
+    return records
 
-    target_mysql_table = 'portfolio_scan' if operation == 'scan' else 'portfolio_operations'
-    col_names = ["portfolio", "symbol", "vol_percent", "date_added", "type", "price", "record_date", "uniqueness"]
 
-    if operation == 'scan' and len(previous_scanned_records) > 0:
-        cnt = 0
-        for one_record in records:
-            # since vol_percent is now included in uniqueness calculation, following insert will insert duplicated
-            # records, if vol_percent is different, but previous records will be removed in deduplication.
-            if one_record[-1] in uniqs_of_last_scan:
-                uniqs_of_last_scan.remove(one_record[-1])
-            else:
-                mysql_helper.insert_one_record(target_mysql_table,
-                                               col_names=col_names, values=one_record, suppress_duplicate=True)
-            # if current record is not among previous scan of this portfolio, and its record date is today
-            # then it is a newly added record in open_portfolio
-            if not is_in(one_record, previous_scanned_records):
-                record_derived = one_record[:-1]
-                # lone becomes lone_init, short becomes short_init
-                record_derived[__type_idx] = record_derived[__type_idx] + "_init"
-                temp_record_for_uniq_calc = record_derived[:]
-                # vol_percent should'nt be included into uniqueness calculation
-                temp_record_for_uniq_calc[__vol_percent_idx] = None
-                record_derived.append(utility.compute_uniqueness_str(*temp_record_for_uniq_calc))
-                mysql_helper.insert_one_record('portfolio_operations',
-                                               col_names=col_names, values=record_derived, suppress_duplicate=True)
-                cnt = cnt + 1
-        logging.info("Portfolio \"%s\"(%s) has %s records added compared against last last scan.",
-                     port_name, today_date.strftime('%y-%m-%d'), cnt)
-
-        # at this time, elements inside uniqs_of_last_scan belong to those trades which no longer appear in
-        # current portfolio (likely have been deleted)
-        if len(uniqs_of_last_scan) > 0:
-            mysql_helper.delete_from_table(target_mysql_table,
-                                           col_val_dict={
-                                               'portfolio': port_name,
-                                               'record_date': today_date,
-                                               'uniqueness': uniqs_of_last_scan,
-                                           })
-            cnt = 0
-            for prev_record in previous_scanned_records:
-                # this prev_record is actually the same trade recorded in records, do not generate _close
-                if is_in(prev_record, records):
-                    continue
-                record_derived = list(prev_record)[:-1]
-                # lone becomes lone_close, short becomes short_close
-                record_derived[__type_idx] = record_derived[__type_idx] + "_close"
-                record_derived[__record_date_idx] = today_date
-                temp_record_for_uniq_calc = record_derived[:]
-                # vol_percent should not be included into uniqueness calculation
-                temp_record_for_uniq_calc[__vol_percent_idx] = None
-                record_derived.append(utility.compute_uniqueness_str(*temp_record_for_uniq_calc))
-                copied_col_names = col_names[:]
-                try:
-                    record_derived.append(get_stock_price(driver, record_derived[__symbol_idx]))
-                    copied_col_names.append('price_at_close')
-                except ValueError as ve:
-                    logging.error(str(ve))
-                finally:
-                    driver.get(port_url)
-                mysql_helper.insert_one_record('portfolio_operations',
-                                               col_names=copied_col_names,
-                                               values=record_derived,
-                                               suppress_duplicate=True)
-                cnt = cnt + 1
-            logging.info("Portfolio \"{}\"({}) has {} records removed from last last scan.".format(
-                port_name, today_date.strftime('%y-%m-%d'), cnt))
-        else:
-            logging.info("Portfolio \"{}\"({}) has {} records removed from last last scan.".format(
-                port_name, today_date.strftime('%y-%m-%d'), 0))
-    else:
-        if operation == 'scan':
-            logging.warning("operation: {}, len(previous_scanned_records): {}".format(
-                operation, len(previous_scanned_records)))
-        for idx, one_record in enumerate(records):
-            copied_col_names = col_names[:]
-            if one_record[__type_idx].endswith("_close"):
-                try:
-                    one_record.append(last_prices[idx])
-                    copied_col_names.append('price_at_close')
-                except ValueError as ve:
-                    logging.error(str(ve))
-                finally:
-                    driver.get(port_url)
-            mysql_helper.insert_one_record(target_mysql_table, col_names=copied_col_names, values=one_record,
-                                           suppress_duplicate=True)
+def get_prev_records(mysql_helper: mysql_related.MySqlHelper, port_name, table: str = 'portfolio_scan'):
+    previous_records = []
+    selected_cols = ['id', 'portfolio', 'symbol', 'vol_percent', 'date_added', 'type', 'price', 'record_date',
+                     'uniqueness']
+    mysql_helper.select_from(table, None, selected_cols,
+                             col_val_dict={
+                                 'record_date': '(SELECT MAX(record_date) FROM {} '.format(table) +
+                                                '    WHERE portfolio = \'{}\')'.format(port_name),
+                                 'portfolio': port_name
+                             },
+                             callback_on_cursor=mysql_related.MySqlHelper.default_select_collector,
+                             result_holder=previous_records)
+    for idx, one_prev_record in enumerate(previous_records):
+        previous_records[idx] = OrderedDict(
+            [(selected_cols[col_idx], val) for col_idx, val in enumerate(one_prev_record)])
+    return previous_records
 
 
 def get_stock_price(driver, symbol):
@@ -301,6 +209,116 @@ def handle_zacks_email(email_content: str):
     # print(len(tables))
     # for table in tables:
     #     print(table)
+
+
+def process(records_by_operation: Dict[str, List[Dict]],
+            prev_portfolio: List[OrderedDict],
+            web_driver: WebDriver = None):
+
+    tbr = {
+        "portfolio_scan": {
+            "update": [],
+            "insert": [],
+            "delete": []  # records or only ids
+        },
+        "portfolio_operations": {
+            "delete": [],
+            "insert": []
+        }}
+    current_portfolio = records_by_operation["additions"][:]
+    current_portfolio.extend(records_by_operation["scan"])
+    current_portfolio = sorted(current_portfolio, key=operator.itemgetter("symbol", "date_added"))
+    prev_portfolio = sorted(prev_portfolio, key=operator.itemgetter("symbol", "date_added"))
+
+    cur_scan_record_date = current_portfolio[0]["record_date"] if len(current_portfolio) else None
+    prev_scan_record_date = prev_portfolio[0]["record_date"] if len(prev_portfolio) else None
+
+    cur_idx = 0
+    cur_len = len(current_portfolio)
+    pre_idx = 0
+    pre_len = len(prev_portfolio)
+    while cur_idx < cur_len and pre_idx < pre_len:
+        if compare_trade(prev_portfolio[pre_idx], current_portfolio[cur_idx], False, False) < 0:
+            # now deleted
+            tbr["portfolio_scan"]["delete"].append(prev_portfolio[pre_idx])
+            tbr["portfolio_operations"]["delete"].append(OrderedDict(prev_portfolio[pre_idx]))
+            pre_idx += 1
+        elif compare_trade(current_portfolio[cur_idx], prev_portfolio[pre_idx], False, False) < 0:
+            # new trade
+            tbr["portfolio_scan"]["insert"].append(current_portfolio[cur_idx])
+            tbr["portfolio_operations"]["insert"].append(OrderedDict(current_portfolio[cur_idx]))
+            cur_idx += 1
+        else:
+            # both list have this trade, do nothing
+            # if compare_trade(current_portfolio[cur_idx], prev_portfolio[pre_idx])
+            if compare_trade(current_portfolio[cur_idx], prev_portfolio[pre_idx], True, True) != 0:
+                prev_portfolio[pre_idx].update(current_portfolio[cur_idx])
+                tbr["portfolio_scan"]["update"].append(prev_portfolio[pre_idx])
+            pre_idx += 1
+            cur_idx += 1
+    while pre_idx < pre_len:
+        tbr["portfolio_scan"]["delete"].append(prev_portfolio[pre_idx])
+        tbr["portfolio_operations"]["delete"].append(OrderedDict(prev_portfolio[pre_idx]))
+        pre_idx += 1
+    while cur_idx < cur_len:
+        tbr["portfolio_scan"]["insert"].append(current_portfolio[cur_idx])
+        tbr["portfolio_operations"]["insert"].append(OrderedDict(current_portfolio[cur_idx]))
+        cur_idx += 1
+
+    if prev_scan_record_date is None or prev_scan_record_date < cur_scan_record_date:
+        tbr["portfolio_scan"]["insert"].clear()
+        tbr["portfolio_scan"]["insert"].extend(current_portfolio)
+        tbr["portfolio_scan"]["delete"].clear()
+        tbr["portfolio_scan"]["update"].clear()
+
+    for record in tbr["portfolio_operations"]["insert"]:
+        if "last_price" in record:
+            del record["last_price"]
+        record["type"] = record["type"] + "_init"
+    for record in tbr["portfolio_operations"]["delete"]:
+        if "last_price" in record:
+            del record["last_price"]
+        record["type"] = record["type"] + "_close"
+        record["price_at_close"] = get_stock_price(web_driver, record["symbol"]) if (web_driver is not None) else -1.0
+        record["uniqueness"] = utility.compute_uniqueness_str(
+            *[record[key] for key in ['portfolio', 'symbol', 'vol_percent', 'date_added', 'type', 'price',
+                                      'record_date', 'price_at_close']])
+        del record["id"]
+    for operation, records in tbr["portfolio_scan"].items():
+        for record in records:
+            if "last_price" in record:
+                del record["last_price"]
+    return tbr
+
+
+def persist_records(mysql_helper: mysql_related.MySqlHelper, tbr):
+    """
+        tbr = {
+        "portfolio_scan": {
+            "update": [],
+            "insert": [],
+            "delete": []  # records or only ids
+        },
+        "portfolio_operations": {
+            "delete": [],
+            "insert": []
+        }}
+    :param mysql_helper:
+    :param tbr:
+    :return:
+    """
+
+    for record in tbr["portfolio_scan"]["insert"]:
+        mysql_helper.insert_one_record("portfolio_scan", None, col_val_dict=record)
+    if len(tbr["portfolio_scan"]["delete"]):
+        where_id_in_this_list = {"id": [record["id"] for record in tbr["portfolio_scan"]["delete"]]}
+        mysql_helper.delete_from_table("portfolio_scan", None, where_id_in_this_list)
+    for record in tbr["portfolio_scan"]["update"]:
+        mysql_helper.update_one_record("portfolio_scan", None, record)
+    for record in tbr["portfolio_operations"]["insert"]:
+        mysql_helper.insert_one_record("portfolio_operations", None, record)
+    for record in tbr["portfolio_operations"]["delete"]:
+        mysql_helper.insert_one_record("portfolio_operations", None, record)
 
 
 def selenium_chrome(output: str = None,
@@ -381,6 +399,7 @@ def selenium_chrome(output: str = None,
         if output_file is not None:
             output_file.write(header + "\n")
 
+        today_date = date.today()
         for int_port in interested_portfolios:
             # visit specified portfolio
             logging.info("now visiting url {}".format(service_name_vs_url[int_port.lower()]))
@@ -398,7 +417,6 @@ def selenium_chrome(output: str = None,
                 except NoSuchElementException:
                     logging.error("At i : {}, could not find target portfolio table by CSS selector: {}",
                                   i, "#ts_content section.portfolio.open table thead tr")
-            port_url = driver.current_url
             if not head_tr:
                 raise NoSuchElementException()
             ths_of_header_row = head_tr.find_elements_by_tag_name("th")
@@ -417,19 +435,28 @@ def selenium_chrome(output: str = None,
                         # noinspection PyStatementEffect
                         td.location_once_scrolled_into_view
                         td.click()
+            records_by_operation = {}
             for operation in ["additions", "deletions", "scan"]:
                 if operation == 'additions':
-                    trs = driver.find_elements_by_css_selector("#ts_content section.additions tbody tr")
+                    css_selector = "#ts_content section.additions tbody"
                 elif operation == 'deletions':
-                    trs = driver.find_elements_by_css_selector("#ts_content section.deletions tbody tr")
-                elif operation == 'scan':
-                    trs = driver.find_elements_by_css_selector("#ts_content section.portfolio.open table tbody tr")
+                    css_selector = "#ts_content section.deletions tbody"
                 else:
-                    raise ValueError("{} is not recognized operation".format(operation))
-                __process_rows_of_table(driver, mysql_helper, operation, trs, int_port,
-                                        port_url=port_url,
-                                        header_vs_col_idx=header_vs_col_idx)
+                    css_selector = "#ts_content section.portfolio.open tbody"
+                tbody_html = driver.find_element_by_css_selector(css_selector).get_attribute('outerHTML')
+                records_by_operation[operation] = tbody_html_to_records(
+                    tbody_html,
+                    header_vs_col_idx,
+                    operation,
+                    int_port,
+                    today_date
+                )
+            prev_scanned_records = get_prev_records(mysql_helper, int_port, 'portfolio_scan')
+            # prev_operat_records = get_prev_records(mysql_helper, int_port, 'portfolio_operations')
+            tbr = process(records_by_operation, prev_scanned_records, driver)
+            persist_records(mysql_helper, tbr)
 
+        # end of for loop:  for int_port in interested_portfolios:
         should_commit = True
     finally:
         if driver is not None:
@@ -474,8 +501,10 @@ def deduplicate(mysql_helper: mysql_related.MySqlHelper):
     mysql_helper.execute_update(deduplicate2_operations)
 
     # remove records like following:
-    # | 276 | Momentum Trader   | CDXS   |      0.1127 | 2018-09-26 | long_init  |     19 | 2018-09-27  | 2bd7e4f009b0a16c035d79a61cc02457 |           NULL |
-    # | 278 | Momentum Trader   | CDXS   |      0.1255 | 2018-09-26 | long_close |      0 | 2018-09-27  | d7b58fcc0712cc1e470e38f74fa635c0 |         17.375 |
+    # | 276 | Momentum Trader   | CDXS   |      0.1127 | 2018-09-26 | long_init  |     19 |
+    # 2018-09-27  | 2bd7e4f009b0a16c035d79a61cc02457 |           NULL |
+    # | 278 | Momentum Trader   | CDXS   |      0.1255 | 2018-09-26 | long_close |      0 |
+    # 2018-09-27  | d7b58fcc0712cc1e470e38f74fa635c0 |         17.375 |
 
     dedup2_stmt_format = """
     DELETE t1 FROM {0} t1
@@ -505,5 +534,5 @@ def deduplicate(mysql_helper: mysql_related.MySqlHelper):
     logging.info("de-duplication executed correctly")
 
 
-def __determine_trade_type(tds: List[WebElement], header_vs_col_idx: Dict[str, int]):
-    return tds[header_vs_col_idx['type']].text.lower() if 'type' in header_vs_col_idx else 'long'
+def __determine_trade_type_bs4(tds, header_vs_col_idx: Dict[str, int]):
+    return tds[header_vs_col_idx['type']].string.lower().strip() if 'type' in header_vs_col_idx else 'long'

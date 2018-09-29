@@ -1,4 +1,5 @@
 import hashlib
+import math
 from datetime import date, datetime
 
 
@@ -25,6 +26,8 @@ def get_propdict_file(path: str):
 def compute_uniqueness_str(*args):
     str_list = []
     for ar in args:
+        if isinstance(ar, list) or isinstance(ar, set):
+            raise TypeError("probably did not add \"*\" when supplying list as argument")
         if isinstance(ar, str):
             str_list.append(ar)
         elif isinstance(ar, float):
@@ -39,3 +42,15 @@ def compute_uniqueness_str(*args):
     to_be_hashed = '\n'.join(str_list)
     hash_object = hashlib.md5(to_be_hashed.encode())
     return hash_object.hexdigest()
+
+
+def null_safe_number_compare(num1, num2, threshold: float = 0.001):
+    if num1 is None and num2 is None:
+        return 0
+    if num1 is None:
+        return -1
+    elif num2 is None:
+        return 1
+    if math.isclose(num1, num2, abs_tol=threshold):
+        return 0
+    return (num1 > num2) - (num1 < num2)
