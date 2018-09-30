@@ -155,7 +155,8 @@ class TestLogicModule(unittest.TestCase):
             "additions": [],
             "deletions": []
         }
-        returned = logic.process(fake_records_by_operation, fake_prev_portfolio, web_driver=driver)
+        returned = logic.process(fake_records_by_operation, fake_prev_portfolio, fake_prev_record_date,
+                                 web_driver=driver)
         self.assertEqual([], returned["portfolio_operations"]["insert"])
         self.assertEqual([], returned["portfolio_operations"]["delete"])
         self.assertEqual([], returned["portfolio_scan"]["insert"])
@@ -169,7 +170,8 @@ class TestLogicModule(unittest.TestCase):
                                              ('record_date', fake_prev_record_date)])
         TestLogicModule.update_record(one_new_long_position, "symbol", "NVDA")
         fake_new_scanned_records.append(one_new_long_position)
-        returned = logic.process(fake_records_by_operation, fake_prev_portfolio, web_driver=driver)
+        returned = logic.process(fake_records_by_operation, fake_prev_portfolio, fake_prev_record_date,
+                                 web_driver=driver)
         self.assertEqual(1, len(returned["portfolio_operations"]["insert"]))
         self.assertEqual("long_init", returned["portfolio_operations"]["insert"][0]["type"])
         self.assertEqual("NVDA", returned["portfolio_operations"]["insert"][0]["symbol"])
@@ -183,7 +185,8 @@ class TestLogicModule(unittest.TestCase):
         # new scan happened at the same day, but a record is deleted in fake_new_scanned_records
         index_of_popped = 2
         popped = fake_new_scanned_records.pop(index_of_popped)
-        returned = logic.process(fake_records_by_operation, fake_prev_portfolio, web_driver=None)
+        returned = logic.process(fake_records_by_operation, fake_prev_portfolio, fake_prev_record_date,
+                                 web_driver=None)
         self.assertEqual([], returned["portfolio_operations"]["insert"])
         # self.assertEqual([], returned["portfolio_operations"]["delete"])
         self.assertEqual(1, len(returned["portfolio_operations"]["delete"]))
@@ -200,7 +203,8 @@ class TestLogicModule(unittest.TestCase):
         index_of_changed = 2
         old_val = fake_new_scanned_records[index_of_changed]["price"]
         fake_new_scanned_records[index_of_changed]["price"] = 16.21
-        returned = logic.process(fake_records_by_operation, fake_prev_portfolio, web_driver=driver)
+        returned = logic.process(fake_records_by_operation, fake_prev_portfolio, fake_prev_record_date,
+                                 web_driver=driver)
         self.assertEqual([], returned["portfolio_operations"]["insert"])
         self.assertEqual([], returned["portfolio_operations"]["delete"])
         self.assertEqual([], returned["portfolio_scan"]["insert"])
@@ -216,7 +220,8 @@ class TestLogicModule(unittest.TestCase):
         fake_cur_record_date = fake_prev_record_date + datetime.timedelta(days=1)
         for fake_new_scan_record in fake_new_scanned_records:
             TestLogicModule.update_record(fake_new_scan_record, "record_date", fake_cur_record_date)
-        returned = logic.process(fake_records_by_operation, fake_prev_portfolio, web_driver=driver)
+        returned = logic.process(fake_records_by_operation, fake_prev_portfolio, fake_cur_record_date,
+                                 web_driver=driver)
         # print(returned["portfolio_operations"]["insert"])
         self.assertEqual([], returned["portfolio_operations"]["insert"])
         self.assertEqual([], returned["portfolio_operations"]["delete"])
@@ -246,7 +251,8 @@ class TestLogicModule(unittest.TestCase):
             "additions": [one_new_long_position],
             "deletions": []
         }
-        returned = logic.process(fake_records_by_operation, fake_prev_portfolio, web_driver=driver)
+        returned = logic.process(fake_records_by_operation, fake_prev_portfolio, fake_cur_record_date,
+                                 web_driver=driver)
         self.assertEqual(1, len(returned["portfolio_operations"]["insert"]),
                          "portfolio_operation.insert should have only one new record.")
         self.assertEqual(0, logic.compare_trade(one_new_long_position, returned["portfolio_operations"]["insert"][0]))
@@ -285,7 +291,8 @@ class TestLogicModule(unittest.TestCase):
             len(fake_prev_portfolio)
         ))
 
-        returned = logic.process(fake_records_by_operation, fake_prev_portfolio, web_driver=driver)
+        returned = logic.process(fake_records_by_operation, fake_prev_portfolio, fake_cur_record_date,
+                                 web_driver=driver)
         self.assertEqual(1, len(returned["portfolio_operations"]["insert"]),
                          "portfolio_operation.insert should have only one new record.")
         self.assertEqual(0, logic.compare_trade(one_new_long_position, returned["portfolio_operations"]["insert"][0]))
@@ -324,7 +331,8 @@ class TestLogicModule(unittest.TestCase):
             len(fake_new_scanned_records),
             len(fake_prev_portfolio)
         ))
-        returned = logic.process(fake_records_by_operation, fake_prev_portfolio, web_driver=driver)
+        returned = logic.process(fake_records_by_operation, fake_prev_portfolio, fake_cur_record_date,
+                                 web_driver=driver)
         self.assertEqual(1, len(returned["portfolio_operations"]["insert"]),
                          "portfolio_operation.insert should have only one new record.")
         self.assertEqual(0, logic.compare_trade(one_new_long_position, returned["portfolio_operations"]["insert"][0]))

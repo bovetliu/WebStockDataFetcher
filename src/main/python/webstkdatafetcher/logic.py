@@ -216,6 +216,7 @@ def handle_zacks_email(email_content: str):
 
 def process(records_by_operation: Dict[str, List[Dict]],
             prev_portfolio: List[OrderedDict],
+            cur_scan_record_date: date,
             web_driver: WebDriver = None):
 
     tbr = {
@@ -233,7 +234,6 @@ def process(records_by_operation: Dict[str, List[Dict]],
     current_portfolio = sorted(current_portfolio, key=operator.itemgetter("symbol", "date_added"))
     prev_portfolio = sorted(prev_portfolio, key=operator.itemgetter("symbol", "date_added"))
 
-    cur_scan_record_date = current_portfolio[0]["record_date"] if len(current_portfolio) else None
     prev_scan_record_date = prev_portfolio[0]["record_date"] if len(prev_portfolio) else None
 
     cur_idx = 0
@@ -456,7 +456,7 @@ def selenium_chrome(output: str = None,
                 )
             prev_scanned_records = get_prev_records(mysql_helper, int_port, 'portfolio_scan')
             # prev_operat_records = get_prev_records(mysql_helper, int_port, 'portfolio_operations')
-            tbr = process(records_by_operation, prev_scanned_records, driver)
+            tbr = process(records_by_operation, prev_scanned_records, today_date, driver)
             persist_records(mysql_helper, tbr)
 
         # end of for loop:  for int_port in interested_portfolios:
