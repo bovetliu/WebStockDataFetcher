@@ -225,7 +225,8 @@ class TestLogicModule(unittest.TestCase):
         self.assertEqual([], returned["portfolio_scan"]["delete"])
         self.assertEqual([], returned["portfolio_scan"]["update"])
 
-        # test scenario: new scan happened at a new day, one new record in new day, in additions table
+        # test scenario: new scan happened at a new day, one new record in new day, in additions table #
+        # test scenario: new scan happened at a new day, one new record in new day, in additions table #
         fake_prev_portfolio = TestLogicModule.get_fake_prev_scanned_results()
         fake_prev_record_date = fake_prev_portfolio[0]["record_date"]
 
@@ -252,6 +253,92 @@ class TestLogicModule(unittest.TestCase):
         self.assertEqual([], returned["portfolio_operations"]["delete"])
         cur_portfolio = fake_new_scanned_records[:]
         cur_portfolio.append(one_new_long_position)
+        self.assertEqual(sorted(cur_portfolio, key=operator.itemgetter("symbol", "date_added")),
+                         returned["portfolio_scan"]["insert"])
+        self.assertEqual([], returned["portfolio_scan"]["delete"])
+        self.assertEqual([], returned["portfolio_scan"]["update"])
+
+        # test scenario: new scan happened at a new day, one new record in new day, in open portfolio table #
+        # test scenario: new scan happened at a new day, one new record in new day, in open portfolio table #
+        fake_prev_portfolio = TestLogicModule.get_fake_prev_scanned_results()
+        fake_prev_record_date = fake_prev_portfolio[0]["record_date"]
+
+        # add record date by by one
+        fake_new_scanned_records = self.generate_new_records_based_old(fake_prev_portfolio)
+        fake_cur_record_date = fake_prev_record_date + datetime.timedelta(days=1)
+        for fake_new_scan_record in fake_new_scanned_records:
+            TestLogicModule.update_record(fake_new_scan_record, "record_date", fake_cur_record_date)
+
+        # creat this new record, it would be "open portfolio" table
+        one_new_long_position = OrderedDict([('portfolio', 'Black Box Trader'), ('symbol', 'NVDA'),
+                                             ('vol_percent', None), ('date_added', fake_cur_record_date),
+                                             ('type', 'long'), ('price', 277.35),
+                                             ('record_date', fake_cur_record_date)])
+        fake_new_scanned_records.append(one_new_long_position)
+        fake_records_by_operation = {
+            "scan": fake_new_scanned_records,
+            "additions": [],
+            "deletions": []
+        }
+        print("len(fake_new_scanned_records): {}, len(fake_prev_portfolio): {}".format(
+            len(fake_new_scanned_records),
+            len(fake_prev_portfolio)
+        ))
+
+        returned = logic.process(fake_records_by_operation, fake_prev_portfolio, web_driver=driver)
+        self.assertEqual(1, len(returned["portfolio_operations"]["insert"]),
+                         "portfolio_operation.insert should have only one new record.")
+        self.assertEqual(0, logic.compare_trade(one_new_long_position, returned["portfolio_operations"]["insert"][0]))
+        self.assertEqual([], returned["portfolio_operations"]["delete"])
+        cur_portfolio = fake_new_scanned_records[:]
+        self.assertEqual(len(cur_portfolio), len(returned["portfolio_scan"]["insert"]))
+        self.assertEqual(sorted(cur_portfolio, key=operator.itemgetter("symbol", "date_added")),
+                         returned["portfolio_scan"]["insert"])
+        self.assertEqual([], returned["portfolio_scan"]["delete"])
+        self.assertEqual([], returned["portfolio_scan"]["update"])
+
+        # test scenario: new scan happened at a new day, one new record in new day, in open portfolio table #
+        # and one record in deletions table #
+        fake_prev_portfolio = TestLogicModule.get_fake_prev_scanned_results()
+        fake_prev_record_date = fake_prev_portfolio[0]["record_date"]
+
+        fake_new_scanned_records = self.generate_new_records_based_old(fake_prev_portfolio)
+        fake_cur_record_date = fake_prev_record_date + datetime.timedelta(days=1)
+        for fake_new_scan_record in fake_new_scanned_records:
+            TestLogicModule.update_record(fake_new_scan_record, "record_date", fake_cur_record_date)
+
+        # creat this new record, it would be "open portfolio" table
+        one_new_long_position = OrderedDict([('portfolio', 'Black Box Trader'), ('symbol', 'NVDA'),
+                                             ('vol_percent', None), ('date_added', fake_cur_record_date),
+                                             ('type', 'long'), ('price', 277.35),
+                                             ('record_date', fake_cur_record_date)])
+        fake_new_scanned_records.append(one_new_long_position)
+        popped = fake_new_scanned_records.pop(4)
+        print(popped)
+        fake_records_by_operation = {
+            "scan": fake_new_scanned_records,
+            "additions": [],
+            "deletions": [popped]
+        }
+        print("len(fake_new_scanned_records): {}, len(fake_prev_portfolio): {}".format(
+            len(fake_new_scanned_records),
+            len(fake_prev_portfolio)
+        ))
+        returned = logic.process(fake_records_by_operation, fake_prev_portfolio, web_driver=driver)
+        self.assertEqual(1, len(returned["portfolio_operations"]["insert"]),
+                         "portfolio_operation.insert should have only one new record.")
+        self.assertEqual(0, logic.compare_trade(one_new_long_position, returned["portfolio_operations"]["insert"][0]))
+        the_old_one_equal_to_popped = None
+        for old_record in fake_prev_portfolio:
+            if logic.compare_trade(old_record, popped, True, False) == 0:
+                the_old_one_equal_to_popped = old_record
+                break
+        del the_old_one_equal_to_popped["id"]
+        self.update_record(the_old_one_equal_to_popped, 'type', the_old_one_equal_to_popped["type"] + "_close")
+        self.assertEqual(0, logic.compare_trade(
+            the_old_one_equal_to_popped, returned["portfolio_operations"]["delete"][0]))
+        cur_portfolio = fake_new_scanned_records[:]
+        self.assertEqual(len(cur_portfolio), len(returned["portfolio_scan"]["insert"]))
         self.assertEqual(sorted(cur_portfolio, key=operator.itemgetter("symbol", "date_added")),
                          returned["portfolio_scan"]["insert"])
         self.assertEqual([], returned["portfolio_scan"]["delete"])
