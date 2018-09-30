@@ -1,5 +1,6 @@
 import hashlib
 import math
+from collections import OrderedDict
 from datetime import date, datetime
 
 
@@ -54,3 +55,14 @@ def null_safe_number_compare(num1, num2, threshold: float = 0.001):
     if math.isclose(num1, num2, abs_tol=threshold):
         return 0
     return (num1 > num2) - (num1 < num2)
+
+
+def remove_operation_suffix(record: dict):
+    if not isinstance(record, OrderedDict):
+        raise TypeError("record is not OrderedDict type")
+    tbr = OrderedDict(record)
+    type_val = tbr['type']
+    type_val = type_val.replace('_init', '')
+    type_val = type_val.replace('_close', '')
+    tbr['type'] = type_val
+    return tbr

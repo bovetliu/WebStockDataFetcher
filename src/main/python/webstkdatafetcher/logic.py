@@ -50,7 +50,10 @@ def __table_header_name_remap(header: str):
         return header.lower()
 
 
-def compare_trade(this_record, that_record, compare_price: bool = False, compare_vol_percent: bool = False):
+def compare_trade(this_record: dict, that_record: dict, compare_price: bool = False, compare_vol_percent: bool = False):
+    this_record = utility.remove_operation_suffix(this_record)
+    that_record = utility.remove_operation_suffix(that_record)
+
     attrs = ["portfolio", "symbol", "date_added", "type"]
     for attr in attrs:
         result = (this_record[attr] > that_record[attr]) - (this_record[attr] < that_record[attr])

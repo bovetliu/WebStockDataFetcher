@@ -33,6 +33,13 @@ class TestLogicModule(unittest.TestCase):
         self.assertNotEqual(0, logic.compare_trade(curr_record, prev_record, True, True))
         self.assertNotEqual(0, logic.compare_trade(curr_record, prev_record, False, True))
 
+        curr_record_scan_record = ["test_port", "XYZ", 0.038, date(2018, 9, 7), 'long', 34.78, date(2018, 9, 18),
+                                   'fakeunique']
+        curr_record_scan_record = OrderedDict([(col_names[col_idx], col_val)
+                                               for col_idx, col_val in enumerate(curr_record_scan_record)])
+        self.assertNotEqual(0, logic.compare_trade(curr_record_scan_record, prev_record, True, True))
+        self.assertNotEqual(0, logic.compare_trade(curr_record_scan_record, prev_record, False, True))
+
         # symbol changed
         curr_record = ["test_port", "XZ", 0.038, date(2018, 9, 7), 'long_init', 34.78, date(2018, 9, 18), 'fakeunique']
         curr_record = OrderedDict([(col_names[col_idx], col_val) for col_idx, col_val in enumerate(curr_record)])
@@ -204,7 +211,6 @@ class TestLogicModule(unittest.TestCase):
         fake_new_scanned_records[index_of_changed]["price"] = old_val
 
         # test scenario: new scan happened at a new day, no new change
-        logging.info("len(fake_new_scanned_records): %s\n", len(fake_new_scanned_records))
         self.assertEqual(len(fake_new_scanned_records), len(fake_prev_portfolio))
         fake_prev_record_date = fake_prev_portfolio[0]["record_date"]
         fake_cur_record_date = fake_prev_record_date + datetime.timedelta(days=1)
@@ -218,7 +224,39 @@ class TestLogicModule(unittest.TestCase):
                          returned["portfolio_scan"]["insert"])
         self.assertEqual([], returned["portfolio_scan"]["delete"])
         self.assertEqual([], returned["portfolio_scan"]["update"])
-        # print(returned)
+
+        # test scenario: new scan happened at a new day, one new record in new day, in additions table
+        fake_prev_portfolio = TestLogicModule.get_fake_prev_scanned_results()
+        fake_prev_record_date = fake_prev_portfolio[0]["record_date"]
+
+        # add record date by by one
+        fake_new_scanned_records = self.generate_new_records_based_old(fake_prev_portfolio)
+        fake_cur_record_date = fake_prev_record_date + datetime.timedelta(days=1)
+        for fake_new_scan_record in fake_new_scanned_records:
+            TestLogicModule.update_record(fake_new_scan_record, "record_date", fake_cur_record_date)
+
+        # creat this new record, it would be "additions" table
+        one_new_long_position = OrderedDict([('portfolio', 'Black Box Trader'), ('symbol', 'NVDA'),
+                                             ('vol_percent', None), ('date_added', fake_cur_record_date),
+                                             ('type', 'long'), ('price', 277.35),
+                                             ('record_date', fake_cur_record_date)])
+        fake_records_by_operation = {
+            "scan": fake_new_scanned_records,
+            "additions": [one_new_long_position],
+            "deletions": []
+        }
+        returned = logic.process(fake_records_by_operation, fake_prev_portfolio, web_driver=driver)
+        self.assertEqual(1, len(returned["portfolio_operations"]["insert"]),
+                         "portfolio_operation.insert should have only one new record.")
+        self.assertEqual(0, logic.compare_trade(one_new_long_position, returned["portfolio_operations"]["insert"][0]))
+        self.assertEqual([], returned["portfolio_operations"]["delete"])
+        cur_portfolio = fake_new_scanned_records[:]
+        cur_portfolio.append(one_new_long_position)
+        self.assertEqual(sorted(cur_portfolio, key=operator.itemgetter("symbol", "date_added")),
+                         returned["portfolio_scan"]["insert"])
+        self.assertEqual([], returned["portfolio_scan"]["delete"])
+        self.assertEqual([], returned["portfolio_scan"]["update"])
+
 
     # noinspection PyMethodMayBeStatic
     def generate_new_records_based_old(self, fake_prev_portfolio: List[dict]):
