@@ -321,9 +321,9 @@ def persist_records(mysql_helper: mysql_related.MySqlHelper, tbr):
     for record in tbr["portfolio_scan"]["update"]:
         mysql_helper.update_one_record("portfolio_scan", None, record)
     for record in tbr["portfolio_operations"]["insert"]:
-        mysql_helper.insert_one_record("portfolio_operations", None, record)
+        mysql_helper.insert_one_record("portfolio_operations", None, record, suppress_duplicate=True)
     for record in tbr["portfolio_operations"]["delete"]:
-        mysql_helper.insert_one_record("portfolio_operations", None, record)
+        mysql_helper.insert_one_record("portfolio_operations", None, record, suppress_duplicate=True)
 
 
 def selenium_chrome(output: str = None,
