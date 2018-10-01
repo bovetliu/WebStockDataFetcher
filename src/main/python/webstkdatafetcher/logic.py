@@ -79,7 +79,7 @@ def __extract_price(price_text, num_of_decimal):
         if price_text:
             price = round(float(price_text), num_of_decimal)
         else:
-            price = None
+            price = 0.0
     except ValueError:
         price = round(float(price_text.replace(',', '')), num_of_decimal)
     return price
@@ -277,11 +277,13 @@ def process(records_by_operation: Dict[str, List[Dict]],
     for record in tbr["portfolio_operations"]["insert"]:
         if "last_price" in record:
             del record["last_price"]
-        record["type"] = record["type"] + "_init"
+        if not record["type"].endswith("_init"):
+            record["type"] = record["type"] + "_init"
     for record in tbr["portfolio_operations"]["delete"]:
         if "last_price" in record:
             del record["last_price"]
-        record["type"] = record["type"] + "_close"
+        if not record["type"].endswith("_close"):
+            record["type"] = record["type"] + "_close"
         record["price_at_close"] = get_stock_price(web_driver, record["symbol"]) if (web_driver is not None) else -1.0
         record["uniqueness"] = utility.compute_uniqueness_str(
             *[record[key] for key in ['portfolio', 'symbol', 'vol_percent', 'date_added', 'type', 'price',

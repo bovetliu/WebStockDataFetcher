@@ -93,6 +93,8 @@ class MySqlHelper:
                         print(row)
                         row = cursor.fetchone()
             except mysql.connector.Error as err:
+                if values and len(values) > 0:
+                    logging.error("debug information: values : %s", str(values))
                 if err.errno == errorcode.ER_QUERY_TIMEOUT:
                     logging.error("ER_QUERY_TIMEOUT")
                     need_retry = True
