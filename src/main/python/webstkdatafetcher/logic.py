@@ -131,15 +131,28 @@ def tbody_html_to_records(tbody_content: str, header_vs_col_idx, operation: str,
 
 
 def get_prev_records(mysql_helper: mysql_related.MySqlHelper, port_name, table: str = 'portfolio_scan'):
+    if not isinstance(port_name, str) or len(port_name.strip()) == 0:
+        raise ValueError("port_name must be valid portfolio name")
+
     previous_records = []
     selected_cols = ['id', 'portfolio', 'symbol', 'vol_percent', 'date_added', 'type', 'price', 'record_date',
                      'uniqueness']
+
+    record_date_condition_for_portfolio_operation = [
+        '>=',
+        '(SELECT IFNULL(DATE_SUB(MAX(record_date), INTERVAL 1 DAY), '
+        + 'STR_TO_DATE(\'1970-01-01\', \'%Y-%m-%d\') ) FROM {} '.format(table)
+        + '    WHERE portfolio = \'{}\')'.format(port_name)]
+
+    col_val_dict = {
+        'record_date': '(SELECT MAX(record_date) FROM {} '.format(table) +
+                       '    WHERE portfolio = \'{}\')'.format(port_name),
+        'portfolio': port_name
+    }
+    if table == 'portfolio_operations':
+        col_val_dict['record_date'] = record_date_condition_for_portfolio_operation
     mysql_helper.select_from(table, None, selected_cols,
-                             col_val_dict={
-                                 'record_date': '(SELECT MAX(record_date) FROM {} '.format(table) +
-                                                '    WHERE portfolio = \'{}\')'.format(port_name),
-                                 'portfolio': port_name
-                             },
+                             col_val_dict=col_val_dict,
                              callback_on_cursor=mysql_related.MySqlHelper.default_select_collector,
                              result_holder=previous_records)
     for idx, one_prev_record in enumerate(previous_records):
@@ -216,6 +229,7 @@ def handle_zacks_email(email_content: str):
 
 def process(records_by_operation: Dict[str, List[Dict]],
             prev_portfolio: List[OrderedDict],
+            prev_operations: List[OrderedDict],
             cur_scan_record_date: date,
             web_driver: WebDriver = None):
 
@@ -227,7 +241,8 @@ def process(records_by_operation: Dict[str, List[Dict]],
         },
         "portfolio_operations": {
             "delete": [],
-            "insert": []
+            "insert": [],
+            "update": []
         }}
     current_portfolio = records_by_operation["additions"][:]
     current_portfolio.extend(records_by_operation["scan"])
@@ -257,6 +272,11 @@ def process(records_by_operation: Dict[str, List[Dict]],
             if compare_trade(current_portfolio[cur_idx], prev_portfolio[pre_idx], True, True) != 0:
                 prev_portfolio[pre_idx].update(current_portfolio[cur_idx])
                 tbr["portfolio_scan"]["update"].append(prev_portfolio[pre_idx])
+                for prev_operation in prev_operations:
+                    if compare_trade(prev_operation, current_portfolio[cur_idx], False, False) == 0:
+                        utility.update_record(prev_operation, "price", current_portfolio[cur_idx]["price"])
+                        utility.update_record(prev_operation, "vol_percent", current_portfolio[cur_idx]["vol_percent"])
+                        tbr["portfolio_operations"]["update"].append(prev_operation)
             pre_idx += 1
             cur_idx += 1
     while pre_idx < pre_len:
@@ -268,6 +288,8 @@ def process(records_by_operation: Dict[str, List[Dict]],
         tbr["portfolio_operations"]["insert"].append(OrderedDict(current_portfolio[cur_idx]))
         cur_idx += 1
 
+    # if prev scanned records are from previous day, or previous there are no records (means today is first day
+    # started recording data), put all currently scanned data to "insert"
     if prev_scan_record_date is None or prev_scan_record_date < cur_scan_record_date:
         tbr["portfolio_scan"]["insert"].clear()
         tbr["portfolio_scan"]["insert"].extend(current_portfolio)
@@ -324,6 +346,8 @@ def persist_records(mysql_helper: mysql_related.MySqlHelper, tbr):
         mysql_helper.insert_one_record("portfolio_operations", None, record, suppress_duplicate=True)
     for record in tbr["portfolio_operations"]["delete"]:
         mysql_helper.insert_one_record("portfolio_operations", None, record, suppress_duplicate=True)
+    for record in tbr["portfolio_operations"]["update"]:
+        mysql_helper.update_one_record("portfolio_operations", None, record)
 
 
 def selenium_chrome(output: str = None,
@@ -395,7 +419,7 @@ def selenium_chrome(output: str = None,
             return
 
         for int_port in interested_portfolios:
-            assert int_port.lower() in service_name_vs_url, "\"" + int_port.lower() + "\" could not be found."
+            assert int_port.lower() in service_name_vs_url, '{} could not be found'.format(int_port.lower())
 
         # record_date means the date this record generated
         header = "{}\t{}\t{}\t{}\t{}\t{}\t{}".format(
@@ -457,8 +481,8 @@ def selenium_chrome(output: str = None,
                     today_date
                 )
             prev_scanned_records = get_prev_records(mysql_helper, int_port, 'portfolio_scan')
-            # prev_operat_records = get_prev_records(mysql_helper, int_port, 'portfolio_operations')
-            tbr = process(records_by_operation, prev_scanned_records, today_date, driver)
+            prev_operat_records = get_prev_records(mysql_helper, int_port, 'portfolio_operations')
+            tbr = process(records_by_operation, prev_scanned_records, prev_operat_records, today_date, driver)
             persist_records(mysql_helper, tbr)
 
         # end of for loop:  for int_port in interested_portfolios:

@@ -136,6 +136,13 @@ class TestLogicModule(unittest.TestCase):
         for one_prev_record in results:
             self.assertEqual(one_prev_record['portfolio'], port_name)
 
+        port_name = 'Momentum Trader'
+        results = logic.get_prev_records(mysql_helper, port_name, 'portfolio_operations')
+        self.assertTrue(len(results) > 0)
+        for one_prev_record in results:
+            print(one_prev_record)
+            self.assertEqual(one_prev_record['portfolio'], port_name)
+
     def test_process(self):
         chrome_option = webdriver.ChromeOptions()
         # invokes headless setter
@@ -155,7 +162,7 @@ class TestLogicModule(unittest.TestCase):
             "additions": [],
             "deletions": []
         }
-        returned = logic.process(fake_records_by_operation, fake_prev_portfolio, fake_prev_record_date,
+        returned = logic.process(fake_records_by_operation, fake_prev_portfolio, [], fake_prev_record_date,
                                  web_driver=driver)
         self.assertEqual([], returned["portfolio_operations"]["insert"])
         self.assertEqual([], returned["portfolio_operations"]["delete"])
@@ -168,9 +175,9 @@ class TestLogicModule(unittest.TestCase):
                                              ('vol_percent', None), ('date_added', fake_prev_record_date),
                                              ('type', 'long'), ('price', 277.35),
                                              ('record_date', fake_prev_record_date)])
-        TestLogicModule.update_record(one_new_long_position, "symbol", "NVDA")
+        utility.update_record(one_new_long_position, "symbol", "NVDA")
         fake_new_scanned_records.append(one_new_long_position)
-        returned = logic.process(fake_records_by_operation, fake_prev_portfolio, fake_prev_record_date,
+        returned = logic.process(fake_records_by_operation, fake_prev_portfolio, [], fake_prev_record_date,
                                  web_driver=driver)
         self.assertEqual(1, len(returned["portfolio_operations"]["insert"]))
         self.assertEqual("long_init", returned["portfolio_operations"]["insert"][0]["type"])
@@ -185,7 +192,7 @@ class TestLogicModule(unittest.TestCase):
         # new scan happened at the same day, but a record is deleted in fake_new_scanned_records
         index_of_popped = 2
         popped = fake_new_scanned_records.pop(index_of_popped)
-        returned = logic.process(fake_records_by_operation, fake_prev_portfolio, fake_prev_record_date,
+        returned = logic.process(fake_records_by_operation, fake_prev_portfolio, [], fake_prev_record_date,
                                  web_driver=None)
         self.assertEqual([], returned["portfolio_operations"]["insert"])
         # self.assertEqual([], returned["portfolio_operations"]["delete"])
@@ -203,7 +210,7 @@ class TestLogicModule(unittest.TestCase):
         index_of_changed = 2
         old_val = fake_new_scanned_records[index_of_changed]["price"]
         fake_new_scanned_records[index_of_changed]["price"] = 16.21
-        returned = logic.process(fake_records_by_operation, fake_prev_portfolio, fake_prev_record_date,
+        returned = logic.process(fake_records_by_operation, fake_prev_portfolio, [], fake_prev_record_date,
                                  web_driver=driver)
         self.assertEqual([], returned["portfolio_operations"]["insert"])
         self.assertEqual([], returned["portfolio_operations"]["delete"])
@@ -214,13 +221,43 @@ class TestLogicModule(unittest.TestCase):
         self.assertEqual(fake_prev_portfolio[index_of_changed]["id"], returned["portfolio_scan"]["update"][0]["id"])
         fake_new_scanned_records[index_of_changed]["price"] = old_val
 
+        # new scan happened at the same day, but a record changed a from None to 16.21, simulating price updating after
+        # market close, and this record is one of operation
+        index_of_changed = 2
+        fake_prev_portfolio = TestLogicModule.get_fake_prev_scanned_results()
+        fake_new_scanned_records = self.generate_new_records_based_old(fake_prev_portfolio)
+        old_val = fake_new_scanned_records[index_of_changed]["price"]
+        fake_new_scanned_records[index_of_changed]["price"] = 16.21
+        fake_prev_insertion_operation = OrderedDict(fake_prev_portfolio[index_of_changed])
+        fake_prev_insertion_operation["type"] = fake_prev_insertion_operation["type"] + "_init"
+
+        fake_records_by_operation = {
+            "scan": fake_new_scanned_records,
+            "additions": [],
+            "deletions": []
+        }
+        returned = logic.process(fake_records_by_operation, fake_prev_portfolio,
+                                 [fake_prev_insertion_operation],
+                                 fake_prev_record_date,
+                                 web_driver=driver)
+        self.assertEqual([], returned["portfolio_operations"]["insert"])
+        self.assertEqual([], returned["portfolio_operations"]["delete"])
+        self.assertEqual(1, len(returned["portfolio_operations"]["update"]))
+        self.assertEqual(16.21, returned["portfolio_operations"]["update"][0]["price"])
+        self.assertEqual("long_init", returned["portfolio_operations"]["update"][0]["type"])
+        self.assertEqual([], returned["portfolio_scan"]["insert"])
+        self.assertEqual([], returned["portfolio_scan"]["delete"])
+        self.assertEqual(16.21, returned["portfolio_scan"]["update"][0]["price"])
+        self.assertEqual(fake_prev_portfolio[index_of_changed]["id"], returned["portfolio_scan"]["update"][0]["id"])
+        fake_new_scanned_records[index_of_changed]["price"] = old_val
+
         # test scenario: new scan happened at a new day, no new change
         self.assertEqual(len(fake_new_scanned_records), len(fake_prev_portfolio))
         fake_prev_record_date = fake_prev_portfolio[0]["record_date"]
         fake_cur_record_date = fake_prev_record_date + datetime.timedelta(days=1)
         for fake_new_scan_record in fake_new_scanned_records:
-            TestLogicModule.update_record(fake_new_scan_record, "record_date", fake_cur_record_date)
-        returned = logic.process(fake_records_by_operation, fake_prev_portfolio, fake_cur_record_date,
+            utility.update_record(fake_new_scan_record, "record_date", fake_cur_record_date)
+        returned = logic.process(fake_records_by_operation, fake_prev_portfolio, [], fake_cur_record_date,
                                  web_driver=driver)
         # print(returned["portfolio_operations"]["insert"])
         self.assertEqual([], returned["portfolio_operations"]["insert"])
@@ -239,7 +276,7 @@ class TestLogicModule(unittest.TestCase):
         fake_new_scanned_records = self.generate_new_records_based_old(fake_prev_portfolio)
         fake_cur_record_date = fake_prev_record_date + datetime.timedelta(days=1)
         for fake_new_scan_record in fake_new_scanned_records:
-            TestLogicModule.update_record(fake_new_scan_record, "record_date", fake_cur_record_date)
+            utility.update_record(fake_new_scan_record, "record_date", fake_cur_record_date)
 
         # creat this new record, it would be "additions" table
         one_new_long_position = OrderedDict([('portfolio', 'Black Box Trader'), ('symbol', 'NVDA'),
@@ -251,7 +288,7 @@ class TestLogicModule(unittest.TestCase):
             "additions": [one_new_long_position],
             "deletions": []
         }
-        returned = logic.process(fake_records_by_operation, fake_prev_portfolio, fake_cur_record_date,
+        returned = logic.process(fake_records_by_operation, fake_prev_portfolio, [], fake_cur_record_date,
                                  web_driver=driver)
         self.assertEqual(1, len(returned["portfolio_operations"]["insert"]),
                          "portfolio_operation.insert should have only one new record.")
@@ -273,7 +310,7 @@ class TestLogicModule(unittest.TestCase):
         fake_new_scanned_records = self.generate_new_records_based_old(fake_prev_portfolio)
         fake_cur_record_date = fake_prev_record_date + datetime.timedelta(days=1)
         for fake_new_scan_record in fake_new_scanned_records:
-            TestLogicModule.update_record(fake_new_scan_record, "record_date", fake_cur_record_date)
+            utility.update_record(fake_new_scan_record, "record_date", fake_cur_record_date)
 
         # creat this new record, it would be "open portfolio" table
         one_new_long_position = OrderedDict([('portfolio', 'Black Box Trader'), ('symbol', 'NVDA'),
@@ -291,7 +328,7 @@ class TestLogicModule(unittest.TestCase):
             len(fake_prev_portfolio)
         ))
 
-        returned = logic.process(fake_records_by_operation, fake_prev_portfolio, fake_cur_record_date,
+        returned = logic.process(fake_records_by_operation, fake_prev_portfolio, [], fake_cur_record_date,
                                  web_driver=driver)
         self.assertEqual(1, len(returned["portfolio_operations"]["insert"]),
                          "portfolio_operation.insert should have only one new record.")
@@ -312,7 +349,7 @@ class TestLogicModule(unittest.TestCase):
         fake_new_scanned_records = self.generate_new_records_based_old(fake_prev_portfolio)
         fake_cur_record_date = fake_prev_record_date + datetime.timedelta(days=1)
         for fake_new_scan_record in fake_new_scanned_records:
-            TestLogicModule.update_record(fake_new_scan_record, "record_date", fake_cur_record_date)
+            utility.update_record(fake_new_scan_record, "record_date", fake_cur_record_date)
 
         # creat this new record, it would be "open portfolio" table
         one_new_long_position = OrderedDict([('portfolio', 'Black Box Trader'), ('symbol', 'NVDA'),
@@ -321,7 +358,6 @@ class TestLogicModule(unittest.TestCase):
                                              ('record_date', fake_cur_record_date)])
         fake_new_scanned_records.append(one_new_long_position)
         popped = fake_new_scanned_records.pop(4)
-        print(popped)
         fake_records_by_operation = {
             "scan": fake_new_scanned_records,
             "additions": [],
@@ -331,7 +367,7 @@ class TestLogicModule(unittest.TestCase):
             len(fake_new_scanned_records),
             len(fake_prev_portfolio)
         ))
-        returned = logic.process(fake_records_by_operation, fake_prev_portfolio, fake_cur_record_date,
+        returned = logic.process(fake_records_by_operation, fake_prev_portfolio, [], fake_cur_record_date,
                                  web_driver=driver)
         self.assertEqual(1, len(returned["portfolio_operations"]["insert"]),
                          "portfolio_operation.insert should have only one new record.")
@@ -342,7 +378,7 @@ class TestLogicModule(unittest.TestCase):
                 the_old_one_equal_to_popped = old_record
                 break
         del the_old_one_equal_to_popped["id"]
-        self.update_record(the_old_one_equal_to_popped, 'type', the_old_one_equal_to_popped["type"] + "_close")
+        utility.update_record(the_old_one_equal_to_popped, 'type', the_old_one_equal_to_popped["type"] + "_close")
         self.assertEqual(0, logic.compare_trade(
             the_old_one_equal_to_popped, returned["portfolio_operations"]["delete"][0]))
         cur_portfolio = fake_new_scanned_records[:]
@@ -372,16 +408,6 @@ class TestLogicModule(unittest.TestCase):
         mysql_helper = mysql_related.MySqlHelper(db_config_dict=utility.get_propdict_file(db_prop_path),
                                                  reuse_connection=False)
         return mysql_helper
-
-    @staticmethod
-    def update_record(record, key, value):
-        if key not in record:
-            raise KeyError("key: " + key + ", is not in record")
-        record[key] = value
-        record["uniqueness"] = utility.compute_uniqueness_str(
-            *[record[key] for key in ['portfolio', 'symbol', 'vol_percent', 'date_added', 'type',
-                                      'price', 'record_date']])
-        return record
 
     @staticmethod
     def get_fake_prev_scanned_results():

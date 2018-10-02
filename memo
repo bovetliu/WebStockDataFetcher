@@ -22,7 +22,7 @@ cd WebStockDataFetcher
 
 ## some mysql commands:
 select * from portfolio_scan;
-select * from portfolio_operations WHERE record_date >= '2018-09-28';
+select * from portfolio_operations WHERE record_date >= '2018-09-28' ORDER BY record_date;
 select id,portfolio,symbol,vol_percent,date_added,type,price,record_date,price_at_close
   from portfolio_operations ORDER BY record_date DESC, id ASC;
 select * from portfolio_scan where record_date = CURDATE();

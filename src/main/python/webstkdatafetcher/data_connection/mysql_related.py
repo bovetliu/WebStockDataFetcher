@@ -226,13 +226,21 @@ class MySqlHelper:
         to_be_removed_keys = []
         if col_val_dict:
             for col_name, col_val in col_val_dict.items():
+                operator = "="
+                if isinstance(col_val, list):
+                    if len(col_val) != 2:
+                        raise ValueError("col val length should be 2")
+                    operator = col_val[0].strip()
+                    if len(operator) > 3 or len(operator) == 0:
+                        raise ValueError("operation might be invalid : " + col_val[0])
+                    col_val = col_val[1]
                 if col_name == 'vol_percent' or col_name == 'price':
-                    small_equal_conditions.append("ROUND({}, 6) = %s".format(col_name))
+                    small_equal_conditions.append("ROUND({}, 6) {} %s".format(col_name, operator))
                 elif isinstance(col_val, str) and col_val.upper().startswith("(SELECT "):
-                    small_equal_conditions.append("{} = {}".format(col_name, col_val))
+                    small_equal_conditions.append("{} {} {}".format(col_name, operator, col_val))
                     to_be_removed_keys.append(col_name)
                 else:
-                    small_equal_conditions.append("{} = %s".format(col_name))
+                    small_equal_conditions.append("{} {} %s".format(col_name, operator))
         where = " AND ".join(small_equal_conditions)
         if len(to_be_removed_keys):
             for to_be_removed_key in to_be_removed_keys:

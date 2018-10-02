@@ -45,6 +45,16 @@ def compute_uniqueness_str(*args):
     return hash_object.hexdigest()
 
 
+def update_record(record, key, value):
+    if key not in record:
+        raise KeyError("key: " + key + ", is not in record")
+    record[key] = value
+    record["uniqueness"] = compute_uniqueness_str(
+        *[record[key] for key in ['portfolio', 'symbol', 'vol_percent', 'date_added', 'type',
+                                  'price', 'record_date']])
+    return record
+
+
 def null_safe_number_compare(num1, num2, threshold: float = 0.001):
     if num1 is None and num2 is None:
         return 0
