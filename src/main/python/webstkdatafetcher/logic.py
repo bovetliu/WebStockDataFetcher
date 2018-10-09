@@ -7,6 +7,7 @@ from selenium import webdriver
 # from selenium.webdriver.common.keys import Keys
 # from selenium.webdriver.support import expected_conditions
 from time import sleep
+import pytz
 from datetime import date, datetime
 from collections import OrderedDict
 import operator
@@ -428,7 +429,9 @@ def selenium_chrome(output: str = None,
         if output_file is not None:
             output_file.write(header + "\n")
 
-        today_date = date.today()
+        utc_now = pytz.utc.localize(datetime.utcnow())
+        et_now = utc_now.astimezone(pytz.timezone('US/Eastern'))
+        today_date = et_now.date()
         for int_port in interested_portfolios:
             # visit specified portfolio
             logging.info("now visiting url {}".format(service_name_vs_url[int_port.lower()]))
