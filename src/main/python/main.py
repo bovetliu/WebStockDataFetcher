@@ -10,7 +10,10 @@ import sys
 if __name__ == "__main__":
 
     log_file_path = join(constants.main_resources, "web_stock_data_fetcher.log")
-    logging.basicConfig(level=logging.INFO, stream=sys.stdout)
+    logging.basicConfig(format='%(asctime)s %(levelname)-7s [%(filename)s:%(lineno)d] %(message)s',
+                        datefmt='%d-%m-%Y:%H:%M:%S',
+                        level=logging.INFO,
+                        stream=sys.stdout)
 
     # execute only if run as a script
     if len(sys.argv) > 3:

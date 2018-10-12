@@ -128,7 +128,7 @@ def tbody_html_to_records(tbody_content: str, header_vs_col_idx, operation: str,
         logging.info("%s %s", operation, one_record_line)
         one_record['uniqueness'] = utility.compute_uniqueness_str(*one_record_values)
         records.append(one_record)
-    if operation == 'scan' and len(records) <= 2:
+    if operation == 'scan' and len(records) <= 2 and port_name != 'Surprise Trader':
         logging.warning("scan {} only yields {} records".format(port_name, len(records)))
         logging.warning("tbody_content html:\n{}".format(soup.prettify()))
     return records
@@ -451,13 +451,16 @@ def selenium_chrome(output: str = None,
                 try:
                     driver.get(service_name_vs_url[int_port.lower()])
                     sleep(3)
+                    trs_in_open_portfolio = driver.find_elements_by_css_selector(
+                        "#ts_content section.portfolio.open tbody tr")
+                    if len(trs_in_open_portfolio) <= 0 and int_port != 'Surprise Trader':
+                        raise NoSuchElementException('could not find records in open portfolio of {}'.format(int_port))
                     # might not be able to find
                     head_tr = driver.find_element_by_css_selector("#ts_content section.portfolio.open table thead tr")
-                except NoSuchElementException:
-                    logging.error("At i : %s, could not find target portfolio table by CSS selector: %s",
-                                  i, "#ts_content section.portfolio.open table thead tr")
+                except NoSuchElementException as nse:
+                    logging.error("At i: %s, except NoSuchElementException, msg: %s", 1, nse.msg)
             if not head_tr:
-                raise NoSuchElementException()
+                raise NoSuchElementException('could not extract head_tr')
             ths_of_header_row = head_tr.find_elements_by_tag_name("th")
             header_vs_col_idx = {}
             for idx, th in enumerate(ths_of_header_row):
