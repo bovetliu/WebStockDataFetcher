@@ -128,6 +128,9 @@ def tbody_html_to_records(tbody_content: str, header_vs_col_idx, operation: str,
         logging.info("%s %s", operation, one_record_line)
         one_record['uniqueness'] = utility.compute_uniqueness_str(*one_record_values)
         records.append(one_record)
+    if operation == 'scan' and len(records) <= 2:
+        logging.warning("scan {} only yields {} records".format(port_name, len(records)))
+        logging.warning("tbody_content html:\n{}".format(soup.prettify()))
     return records
 
 
@@ -138,19 +141,18 @@ def get_prev_records(mysql_helper: mysql_related.MySqlHelper, port_name, table: 
     previous_records = []
     selected_cols = ['id', 'portfolio', 'symbol', 'vol_percent', 'date_added', 'type', 'price', 'record_date',
                      'uniqueness']
-
-    record_date_condition_for_portfolio_operation = [
-        '>=',
-        '(SELECT IFNULL(DATE_SUB(MAX(record_date), INTERVAL 1 DAY), '
-        + 'STR_TO_DATE(\'1970-01-01\', \'%Y-%m-%d\') ) FROM {} '.format(table)
-        + '    WHERE portfolio = \'{}\')'.format(port_name)]
-
     col_val_dict = {
         'record_date': '(SELECT MAX(record_date) FROM {} '.format(table) +
                        '    WHERE portfolio = \'{}\')'.format(port_name),
         'portfolio': port_name
     }
     if table == 'portfolio_operations':
+        record_date_condition_for_portfolio_operation = [
+            '>=',
+            '(SELECT IFNULL(DATE_SUB(MAX(record_date), INTERVAL 1 DAY), '
+            + 'STR_TO_DATE(\'1970-01-01\', \'%Y-%m-%d\') ) FROM {} '.format(table)
+            + '    WHERE portfolio = \'{}\')'.format(port_name)
+        ]
         col_val_dict['record_date'] = record_date_condition_for_portfolio_operation
     mysql_helper.select_from(table, None, selected_cols,
                              col_val_dict=col_val_dict,
@@ -400,6 +402,10 @@ def selenium_chrome(output: str = None,
             if not link.get_attribute("textContent"):
                 raise ValueError("link.text should not be evaluated as false")
             service_name_vs_url[link.get_attribute("textContent").lower()] = link.get_attribute("href")
+        if len(service_name_vs_url) == 0:
+            logging.error("could not find service name and corresponding urls")
+            logging.error(driver.page_source)
+            raise ValueError("could not find service name and corresponding urls")
 
         interested_portfolios = [
             "Home Run Investor",
@@ -420,7 +426,8 @@ def selenium_chrome(output: str = None,
             return
 
         for int_port in interested_portfolios:
-            assert int_port.lower() in service_name_vs_url, '{} could not be found'.format(int_port.lower())
+            assert int_port.lower() in service_name_vs_url, '{} could not be found in {}'.format(
+                int_port.lower(), service_name_vs_url)
 
         # record_date means the date this record generated
         header = "{}\t{}\t{}\t{}\t{}\t{}\t{}".format(
