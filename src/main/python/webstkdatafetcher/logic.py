@@ -404,7 +404,7 @@ def selenium_chrome(output: str = None,
             service_name_vs_url[link.get_attribute("textContent").lower()] = link.get_attribute("href")
         if len(service_name_vs_url) == 0:
             logging.error("could not find service name and corresponding urls")
-            logging.error(driver.page_source)
+            # logging.error(driver.page_source)
             raise ValueError("could not find service name and corresponding urls")
 
         interested_portfolios = [
