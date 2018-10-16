@@ -453,14 +453,17 @@ def selenium_chrome(output: str = None,
                     sleep(3)
                     trs_in_open_portfolio = driver.find_elements_by_css_selector(
                         "#ts_content section.portfolio.open tbody tr")
-                    if len(trs_in_open_portfolio) <= 0 and int_port != 'Surprise Trader':
+                    if len(trs_in_open_portfolio) <= 1 and int_port != 'Surprise Trader':
                         raise NoSuchElementException('could not find records in open portfolio of {}'.format(int_port))
                     # might not be able to find
                     head_tr = driver.find_element_by_css_selector("#ts_content section.portfolio.open table thead tr")
                 except NoSuchElementException as nse:
                     logging.error("At i: %s, except NoSuchElementException, msg: %s", 1, nse.msg)
             if not head_tr:
-                raise NoSuchElementException('could not extract head_tr')
+                logging.error("After three attempts, could not extract content of portfolio {}".format(int_port))
+                logging.error("Going to skip portfolio {}".format(int_port))
+                continue
+                # raise NoSuchElementException('could not extract head_tr')
             ths_of_header_row = head_tr.find_elements_by_tag_name("th")
             header_vs_col_idx = {}
             for idx, th in enumerate(ths_of_header_row):

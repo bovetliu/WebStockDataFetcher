@@ -11,7 +11,7 @@ chrome running in aws ec2: 69.0.3497.100-1
 
 # download logs
 
-scp -i /home/boweiliu/scripts/ib.pem ubuntu@18.224.147.139:/home/ubuntu/logs/scrapezacks/2018_10_10*.log ~/workrepo/WebStockDataFetcherAid/remotelogs
+scp -i /home/boweiliu/scripts/ib.pem ubuntu@18.224.147.139:/home/ubuntu/logs/scrapezacks/2018_10_15*.log ~/workrepo/WebStockDataFetcherAid/remotelogs
 
 mkdir -p ~/bin
 cd ~/bin
