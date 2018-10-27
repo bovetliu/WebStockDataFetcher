@@ -75,7 +75,7 @@ mysql --user=${user} --password=${password} --host=${host} -e "DROP DATABASE zac
 
 
 ## create Read only user stock_app_data_fetcher
-GRANT SELECT ON zacks.* TO 'stock_app_data_fetcher'@'%' IDENTIFIED BY 'password';
+GRANT SELECT ON portfolio.* TO 'stock_app_data_fetcher'@'%' IDENTIFIED BY 'password';
 GRANT SELECT ON zacks_from_ec2.* to 'stock_app_data_fetcher'@'%';
 flush privileges;
 
