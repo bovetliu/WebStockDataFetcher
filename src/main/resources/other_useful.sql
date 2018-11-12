@@ -69,3 +69,9 @@ INNER JOIN portfolio_operations t2
 
 ALTER TABLE portfolio_operations
   ADD COLUMN price_at_close FLOAT NULL AFTER uniqueness;
+
+
+ALTER TABLE portfolio_operations
+  MODIFY COLUMN type VARCHAR(15) NOT NULL;
+ALTER TABLE portfolio_scan
+  MODIFY COLUMN type VARCHAR(15) NOT NULL;
