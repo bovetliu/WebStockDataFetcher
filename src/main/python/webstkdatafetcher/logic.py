@@ -191,6 +191,49 @@ def get_stock_price(driver, symbol):
     return latest_price
 
 
+def get_slickcharts_stock_constituents(driver: WebDriver, index_name: str) -> List[List]:
+    if not isinstance(index_name, str) or index_name == "":
+        raise ValueError("index_name must be str, and cannot be empty")
+    index_name = index_name.lower()
+    valid_index_name = {"sp500", "nasdaq100", "dowjones"}
+    if index_name not in valid_index_name:
+        raise ValueError("index_name must be one of \"sp500\", \"nasdaq100\", \"dowjones\"")
+
+    slick_charts = "https://www.slickcharts.com/"
+    url = slick_charts + index_name
+    get_stocks = False
+    stocks = [["#", "Company", "Symbol", "Weight", "Price", "Change"]]
+    for i in range(3):
+        if get_stocks:
+            break
+        try:
+            stocks = stocks[0:1]
+            driver.get(url)
+            table_element = driver.find_element_by_css_selector("div.row table")
+            soup = BeautifulSoup(table_element.get_attribute("outerHTML"), 'html.parser')
+            trs = soup.select("tbody tr")
+            for tr in trs:
+                tds = tr.find_all("td")
+                row = [
+                    int(tds[0].string.strip()),
+                    tds[1].string.strip(),
+                    tds[2].string.strip(),
+                    float(tds[3].get_text().strip()),
+                    float(tds[4].get_text().replace(",", "").strip()),
+                ]
+                temp_str = tds[5].get_text().strip()
+                row.append(float(temp_str.split("  ")[0].strip()))
+                # logging.info(tds[2].string)
+                stocks.append(row)
+            get_stocks = True
+        finally:
+            # make three attemps at most
+            pass
+    if not get_stocks:
+        raise Exception("could not stocks of {}".format(index_name))
+    return stocks
+
+
 def handle_zacks_email(email_content: str):
     """
     given part of html content of a zacks email wrapped by <div data-test-id="message-body-container">....</div>,

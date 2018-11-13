@@ -2,6 +2,7 @@ import logging
 import operator
 import os.path
 import sys
+import csv
 import unittest
 from collections import OrderedDict
 import datetime
@@ -485,6 +486,28 @@ class TestLogicModule(unittest.TestCase):
         mysql_helper = mysql_related.MySqlHelper(db_config_dict=utility.get_propdict_file(db_prop_path),
                                                  reuse_connection=False)
         return mysql_helper
+
+    def test_get_index_stocks(self):
+        driver = None
+        try:
+            chrome_option = webdriver.ChromeOptions()
+            # invokes headless setter
+            chrome_option.headless = True
+            chrome_option.add_argument("--window-size=1920x1080")
+            driver = webdriver.Chrome(options=chrome_option)
+            driver.maximize_window()
+            indice = ["sp500", "nasdaq100", "dowjones"]
+            file_pos_template = "/home/boweiliu/workrepo/udacity_p_f/src/main/resources/index_symbols/{}.csv"
+            file_poses = [file_pos_template.format(index) for index in indice]
+            for idx, index_name in enumerate(indice):
+                stocks = logic.get_slickcharts_stock_constituents(driver, index_name)
+                file_pos = file_poses[idx]
+                with open(file_pos, 'w') as resultFile:
+                    wr = csv.writer(resultFile, dialect='excel')
+                    wr.writerows(stocks)
+        finally:
+            if driver is not None:
+                driver.close()
 
     @staticmethod
     def get_fake_prev_scanned_results02(fake_date: str = "2018-10-05", table: str = "portfolio_scan"):
