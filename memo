@@ -66,8 +66,8 @@ mysqldump --user=${user} --password=${password} --host=${host} --complete-insert
 mysqldump --user=${user} --password=${password} --host=${host} --complete-insert ${database} > ./${database}.sql
 
 ## reload db backups
-use zacks;
-source /home/boweiliu/workrepo/WebStockDataFetcher/zacks.sql
+use portfolio;
+source /home/boweiliu/workrepo/WebStockDataFetcher/portfolio.sql
 
 ## drop db
 mysql --user=${user} --password=${password} --host=${host} -e "DROP DATABASE zacks;"

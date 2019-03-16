@@ -1,3 +1,4 @@
+-- please not that database name can be programmatically replaced to any other name in main.py
 CREATE DATABASE IF NOT EXISTS zacks;
 USE zacks;
 -- DROP TABLE IF EXISTS portfolio_scan;

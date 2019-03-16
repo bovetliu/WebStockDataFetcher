@@ -18,8 +18,8 @@ if __name__ == "__main__":
     # execute only if run as a script
     if len(sys.argv) > 3:
         print("usage: python3 src/main/python/main.py <usage> <optional_database_name: default zacks>")
-        print("acceptable usage: scrapezacks, scrapezacks_to_remote, email_content01")
-        print("acceptable database_name: any valid MySQL database name")
+        print("acceptable <usage>: scrapezacks, scrapezacks_to_remote, email_content01")
+        print("acceptable <database_name>: any valid MySQL database name")
         exit(1)
     non_default_db_name = None
     if len(sys.argv) == 3:
@@ -36,6 +36,8 @@ if __name__ == "__main__":
     if non_default_db_name:
         db_config_dict["database"] = non_default_db_name
 
+    # if use case is any of ["scrapezacks", "scrapezacks_to_remote", "deduplicate", "db_initialize"],
+    # execute db_initialization.sql on target database.
     if usecase.startswith('scrapezacks') or usecase.startswith('deduplicate') or usecase == 'db_initialize':
         db_initialization_str = utility.get_content_of_file(join(constants.main_resources, "db_initialization.sql"))
         if non_default_db_name:
@@ -47,6 +49,7 @@ if __name__ == "__main__":
             if stmt:
                 mysql_helper.execute_update(stmt, multi=True)
 
+    # if use case is one of ["scrapezacks", "scrapezacks_to_remote"], use chrome driver to execute script.
     if usecase.startswith('scrapezacks'):
         logic.selenium_chrome(clear_previous_content=True,
                               headless=True,
@@ -61,5 +64,5 @@ if __name__ == "__main__":
         pass
     else:
         print("usage: python3 src/main/python/main.py <usage> <optional_database_name: default zacks>")
-        print("acceptable usage: scrapezacks, scrapezacks_to_remote, email_content01")
-        print("acceptable database_name: any valid MySQL database name")
+        print("acceptable <usage>: scrapezacks, scrapezacks_to_remote, email_content01")
+        print("acceptable <database_name>: any valid MySQL database name")
