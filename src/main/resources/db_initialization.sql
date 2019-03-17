@@ -97,8 +97,9 @@ CREATE TABLE yahoo_fin_statistics (
   short_percentage_of_float FLOAT NULL,
   short_percentage_of_shares_outstanding FLOAT NULL,
 
-  -- Record Date
+  -- Record Date and Symbol
   record_date DATE NOT NULL,
+  symbol VARCHAR(10) NOT NULL,
   PRIMARY KEY ( id )
 )
 ENGINE=InnoDB,

@@ -497,7 +497,7 @@ class TestLogicModule(unittest.TestCase):
             driver = webdriver.Chrome(options=chrome_option)
             driver.maximize_window()
             indice = ["sp500", "nasdaq100", "dowjones"]
-            file_pos_template = "/home/boweiliu/workrepo/udacity_p_f/src/main/resources/index_symbols/{}.csv"
+            file_pos_template = "/home/boweiliu/workrepo/WebStockDataFetcher/src/main/resources/index_symbols/{}.csv"
             file_poses = [file_pos_template.format(index) for index in indice]
             for idx, index_name in enumerate(indice):
                 stocks = logic.get_slickcharts_stock_constituents(driver, index_name)

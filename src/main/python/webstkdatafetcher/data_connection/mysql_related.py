@@ -78,7 +78,10 @@ class MySqlHelper:
                 if logging.getLogger().isEnabledFor(logging.DEBUG):
                     logging.debug("stmt: %s", stmt)
                 else:
-                    logging.info("stmt: %s", stmt[:10])
+                    if len(stmt) <= 110:
+                        logging.info("stmt: %s", stmt)
+                    else:
+                        logging.info("stmt: %s ... %s\n", stmt[0:100], stmt[-10:])
                 cursor.execute("SET SESSION MAX_EXECUTION_TIME=7000;")
                 if values:
                     cursor.execute(stmt, values if isinstance(values, tuple) else tuple(values), multi=multi)

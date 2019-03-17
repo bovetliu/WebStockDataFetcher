@@ -1,0 +1,506 @@
+#,Company,Symbol,Weight,Price,Change
+1,Microsoft Corporation,MSFT,3.754728,116.05,0.14
+2,Apple Inc.,AAPL,3.514293,185.88,-0.24
+3,Amazon.com Inc.,AMZN,2.936674,1711.7,-0.66
+4,Facebook Inc. Class A,FB,1.733811,165.79,-0.19
+5,Berkshire Hathaway Inc. Class B,BRK.B,1.677888,204.31,0.0
+6,Johnson & Johnson,JNJ,1.569734,137.7,0.1
+7,Alphabet Inc. Class C,GOOG,1.546657,1183.41,-1.05
+8,Alphabet Inc. Class A,GOOGL,1.511792,1190.3,0.0
+9,JPMorgan Chase & Co.,JPM,1.485942,106.29,-0.26
+10,Exxon Mobil Corporation,XOM,1.444203,80.2,0.05
+11,Visa Inc. Class A,V,1.149409,155.77,0.31
+12,Bank of America Corp,BAC,1.140856,29.32,0.02
+13,Procter & Gamble Company,PG,1.070394,102.47,0.03
+14,Intel Corporation,INTC,1.034611,54.48,0.15
+15,UnitedHealth Group Incorporated,UNH,1.033216,251.4,0.0
+16,Verizon Communications Inc.,VZ,1.015395,58.21,-0.18
+17,Pfizer Inc.,PFE,1.010109,41.68,-0.1
+18,Chevron Corporation,CVX,1.009676,125.43,0.12
+19,Cisco Systems Inc.,CSCO,1.006027,53.22,0.02
+20,AT&T Inc.,T,0.934449,30.66,-0.01
+21,Wells Fargo & Company,WFC,0.905189,50.55,-0.11
+22,Merck & Co. Inc.,MRK,0.899235,81.43,-0.14
+23,Mastercard Incorporated Class A,MA,0.881416,231.4,0.23
+24,Home Depot Inc.,HD,0.87023,182.05,-0.18
+25,Boeing Company,BA,0.836327,378.3,-0.69
+26,Comcast Corporation Class A,CMCSA,0.768386,40.47,0.0
+27,Coca-Cola Company,KO,0.742373,45.35,0.05
+28,Walt Disney Company,DIS,0.722658,113.66,-1.3
+29,PepsiCo Inc.,PEP,0.691397,115.66,0.0
+30,Citigroup Inc.,C,0.66455,65.23,0.04
+31,Netflix Inc.,NFLX,0.663501,362.1,0.64
+32,McDonald's Corporation,MCD,0.597942,185.5,0.17
+33,Walmart Inc.,WMT,0.594599,98.44,0.02
+34,Philip Morris International Inc.,PM,0.591899,90.5,-0.35
+35,Abbott Laboratories,ABT,0.588199,80.15,0.29
+36,Oracle Corporation,ORCL,0.572441,52.84,-0.1
+37,Adobe Inc.,ADBE,0.552732,256.6,-0.49
+38,DowDuPont Inc.,DWDP,0.535549,55.1,-0.18
+39,International Business Machines Corporation,IBM,0.534238,139.43,0.0
+40,Medtronic plc,MDT,0.531594,93.5,-0.29
+41,salesforce.com inc.,CRM,0.521052,161.7,0.19
+42,Union Pacific Corporation,UNP,0.515041,164.0,-1.0
+43,3M Company,MMM,0.512527,208.08,0.0
+44,AbbVie Inc.,ABBV,0.51064,81.02,-0.32
+45,Amgen Inc.,AMGN,0.507598,190.69,-0.55
+46,PayPal Holdings Inc,PYPL,0.494354,101.08,0.35
+47,Eli Lilly and Company,LLY,0.492298,123.94,0.0
+48,Honeywell International Inc.,HON,0.486169,155.35,0.0
+49,Broadcom Inc.,AVGO,0.470828,292.0,1.71
+50,NIKE Inc. Class B,NKE,0.468628,86.8,0.0
+51,Altria Group Inc,MO,0.447838,56.79,0.04
+52,Thermo Fisher Scientific Inc.,TMO,0.44632,263.09,0.0
+53,Accenture Plc Class A,ACN,0.445368,166.39,0.0
+54,United Technologies Corporation,UTX,0.436659,125.9,-0.02
+55,Texas Instruments Incorporated,TXN,0.436408,110.6,-0.14
+56,Costco Wholesale Corporation,COST,0.434566,233.7,0.1
+57,NVIDIA Corporation,NVDA,0.428218,170.35,0.54
+58,Linde plc,LIN,0.407093,176.0,-0.43
+59,NextEra Energy Inc.,NEE,0.386915,192.0,0.76
+60,General Electric Company,GE,0.3799,9.98,0.02
+61,Starbucks Corporation,SBUX,0.372151,70.73,0.06
+62,Gilead Sciences Inc.,GILD,0.354163,65.5,-0.13
+63,American Tower Corporation,AMT,0.35108,189.98,1.01
+64,Bristol-Myers Squibb Company,BMY,0.345314,49.96,0.0
+65,Lowe's Companies Inc.,LOW,0.345014,100.4,0.26
+66,Booking Holdings Inc.,BKNG,0.34252,1749.4,-2.77
+67,Danaher Corporation,DHR,0.335074,128.69,0.0
+68,Anthem Inc.,ANTM,0.33503,303.0,0.0
+69,Caterpillar Inc.,CAT,0.334783,132.67,0.0
+70,American Express Company,AXP,0.334732,113.52,0.0
+71,U.S. Bancorp,USB,0.334085,52.07,0.0
+72,ConocoPhillips,COP,0.328557,67.4,-0.19
+73,United Parcel Service Inc. Class B,UPS,0.326859,109.79,0.27
+74,Lockheed Martin Corporation,LMT,0.311829,296.15,0.0
+75,CVS Health Corporation,CVS,0.305928,55.59,-0.01
+76,Mondelez International Inc. Class A,MDLZ,0.293164,47.85,0.05
+77,Goldman Sachs Group Inc.,GS,0.289806,198.4,0.14
+78,Becton Dickinson and Company,BDX,0.286971,253.92,0.0
+79,QUALCOMM Incorporated,QCOM,0.284768,56.46,-0.14
+80,Automatic Data Processing Inc.,ADP,0.283698,154.9,-0.41
+81,Intuit Inc.,INTU,0.282589,258.13,0.0
+82,TJX Companies Inc,TJX,0.275432,51.88,0.11
+83,Biogen Inc.,BIIB,0.27466,329.0,-0.87
+84,Duke Energy Corporation,DUK,0.273156,91.12,0.47
+85,Intuitive Surgical Inc.,ISRG,0.270479,552.0,-6.21
+86,Cigna Corporation,CI,0.268548,167.5,1.05
+87,Charter Communications Inc. Class A,CHTR,0.265647,352.71,-3.21
+88,Chubb Limited,CB,0.264627,136.35,0.0
+89,Celgene Corporation,CELG,0.262001,88.5,0.04
+90,CME Group Inc. Class A,CME,0.255453,169.95,-0.19
+91,PNC Financial Services Group Inc.,PNC,0.253879,129.86,0.0
+92,Stryker Corporation,SYK,0.253058,194.04,0.0
+93,Schlumberger NV,SLB,0.25155,42.5,0.11
+94,CSX Corporation,CSX,0.248465,72.81,0.0
+95,Dominion Energy Inc,D,0.24415,77.24,0.2
+96,Colgate-Palmolive Company,CL,0.242127,66.25,-0.95
+97,Morgan Stanley,MS,0.236766,43.33,0.0
+98,Simon Property Group Inc.,SPG,0.234454,176.09,-0.0
+99,Boston Scientific Corporation,BSX,0.23361,40.4,0.19
+100,Twenty-First Century Fox Inc. Class A,FOXA,0.231708,51.8,-0.21
+101,Charles Schwab Corporation,SCHW,0.229755,45.45,0.0
+102,Southern Company,SO,0.224726,51.3,-0.56
+103,BlackRock Inc.,BLK,0.224441,433.65,0.1
+104,EOG Resources Inc.,EOG,0.219107,89.05,0.2
+105,Crown Castle International Corp,CCI,0.216905,125.03,0.0
+106,Raytheon Company,RTN,0.216558,178.39,0.44
+107,Deere & Company,DE,0.213735,157.7,-0.45
+108,S&P Global Inc.,SPGI,0.213691,203.18,0.0
+109,Walgreens Boots Alliance Inc,WBA,0.211072,62.55,-0.08
+110,General Motors Company,GM,0.210525,38.1,0.03
+111,Occidental Petroleum Corporation,OXY,0.21042,65.47,0.0
+112,Norfolk Southern Corporation,NSC,0.206859,179.52,0.0
+113,Bank of New York Mellon Corporation,BK,0.204689,53.12,0.0
+114,Exelon Corporation,EXC,0.202061,50.0,0.0
+115,Northrop Grumman Corporation,NOC,0.20175,271.21,0.0
+116,Allergan plc,AGN,0.201608,151.25,0.0
+117,Vertex Pharmaceuticals Incorporated,VRTX,0.200599,188.09,0.0
+118,General Dynamics Corporation,GD,0.19928,169.4,-0.39
+119,Marsh & McLennan Companies Inc.,MMC,0.196563,93.29,0.0
+120,Zoetis Inc. Class A,ZTS,0.195088,96.91,0.0
+121,Illumina Inc.,ILMN,0.191672,306.87,-2.97
+122,Prologis Inc.,PLD,0.190516,71.64,-0.0
+123,Illinois Tool Works Inc.,ITW,0.188721,143.08,-0.1
+124,MetLife Inc.,MET,0.188213,45.31,0.0
+125,Ecolab Inc.,ECL,0.186116,173.6,-0.41
+126,FedEx Corporation,FDX,0.18339,177.73,-0.25
+127,Micron Technology Inc.,MU,0.182642,39.59,0.05
+128,Progressive Corporation,PGR,0.179122,73.6,-0.01
+129,Intercontinental Exchange Inc.,ICE,0.178774,74.63,0.0
+130,Emerson Electric Co.,EMR,0.17839,67.33,0.0
+131,Phillips 66,PSX,0.177497,98.52,0.0
+132,Marathon Petroleum Corporation,MPC,0.174709,60.45,0.0
+133,Kimberly-Clark Corporation,KMB,0.173313,120.19,0.0
+134,Cognizant Technology Solutions Corporation Class A,CTSH,0.1732,72.13,0.0
+135,American Electric Power Company Inc.,AEP,0.172445,83.81,0.0
+136,Aon plc,AON,0.172353,170.0,0.0
+137,Air Products and Chemicals Inc.,APD,0.171265,184.85,0.0
+138,Analog Devices Inc.,ADI,0.169678,109.39,0.0
+139,Target Corporation,TGT,0.169499,76.87,0.21
+140,Capital One Financial Corporation,COF,0.168003,84.33,0.0
+141,Prudential Financial Inc.,PRU,0.167974,95.98,0.0
+142,Waste Management Inc.,WM,0.167949,100.84,-0.13
+143,American International Group Inc.,AIG,0.163603,44.04,0.0
+144,BB&T Corporation,BBT,0.163402,49.98,0.0
+145,Humana Inc.,HUM,0.162573,280.14,0.0
+146,Applied Materials Inc.,AMAT,0.161369,40.55,0.16
+147,Aflac Incorporated,AFL,0.160804,49.95,0.0
+148,Baxter International Inc.,BAX,0.160312,76.94,0.0
+149,Kinder Morgan Inc Class P,KMI,0.159875,19.9,0.03
+150,Edwards Lifesciences Corporation,EW,0.15745,179.75,0.0
+151,Valero Energy Corporation,VLO,0.152953,85.15,0.07
+152,Estee Lauder Companies Inc. Class A,EL,0.151347,164.0,1.26
+153,Equinix Inc.,EQIX,0.150056,441.61,0.0
+154,HCA Healthcare Inc,HCA,0.150022,132.74,0.39
+155,Travelers Companies Inc.,TRV,0.149987,134.18,0.0
+156,Sherwin-Williams Company,SHW,0.149849,431.03,0.0
+157,Fidelity National Information Services Inc.,FIS,0.149299,108.88,0.0
+158,Eaton Corp. Plc,ETN,0.147799,80.58,0.0
+159,Fiserv Inc.,FISV,0.145813,86.79,0.55
+160,Marriott International Inc. Class A,MAR,0.145425,122.32,0.0
+161,Sempra Energy,SRE,0.143561,124.62,0.0
+162,Roper Technologies Inc.,ROP,0.141866,326.21,0.0
+163,Ross Stores Inc.,ROST,0.141809,89.9,0.0
+164,Williams Companies Inc.,WMB,0.14147,27.56,0.0
+165,Autodesk Inc.,ADSK,0.140737,152.54,-0.74
+166,Johnson Controls International plc,JCI,0.140429,35.99,0.16
+167,eBay Inc.,EBAY,0.139628,36.15,-0.15
+168,Activision Blizzard Inc.,ATVI,0.139303,44.75,0.12
+169,Ford Motor Company,F,0.138832,8.43,0.0
+170,Public Storage,PSA,0.138116,217.61,-0.01
+171,Allstate Corporation,ALL,0.136775,94.84,0.0
+172,Red Hat Inc.,RHT,0.135751,181.66,-0.12
+173,Delta Air Lines Inc.,DAL,0.135198,51.2,0.01
+174,Sysco Corporation,SYY,0.133349,66.27,0.0
+175,Regeneron Pharmaceuticals Inc.,REGN,0.13314,414.0,-0.47
+176,Yum! Brands Inc.,YUM,0.132302,100.9,0.0
+177,HP Inc.,HPQ,0.131039,19.88,-0.06
+178,Xilinx Inc.,XLNX,0.130335,124.12,-0.05
+179,Electronic Arts Inc.,EA,0.127292,98.6,-0.38
+180,Public Service Enterprise Group Inc,PEG,0.127064,59.73,0.0
+181,Alexion Pharmaceuticals Inc.,ALXN,0.126748,136.74,0.65
+182,Dollar General Corporation,DG,0.125177,113.8,-0.09
+183,O'Reilly Automotive Inc.,ORLY,0.124883,370.27,0.25
+184,SunTrust Banks Inc.,STI,0.124436,63.8,0.0
+185,Welltower Inc.,WELL,0.124027,77.29,-0.0
+186,Moody's Corporation,MCO,0.123198,176.69,0.0
+187,Xcel Energy Inc.,XEL,0.122389,56.4,-0.1
+188,TE Connectivity Ltd.,TEL,0.122301,83.7,0.0
+189,Constellation Brands Inc. Class A,STZ,0.120279,169.27,-1.18
+190,General Mills Inc.,GIS,0.119251,47.46,-0.05
+191,Amphenol Corporation Class A,APH,0.119172,95.42,0.23
+192,LyondellBasell Industries NV,LYB,0.117899,87.0,0.0
+193,Lam Research Corporation,LRCX,0.117413,182.46,0.07
+194,Corning Inc,GLW,0.116978,34.52,0.0
+195,V.F. Corporation,VFC,0.116683,84.78,0.0
+196,AvalonBay Communities Inc.,AVB,0.116605,199.32,0.35
+197,Equity Residential,EQR,0.116546,75.0,0.24
+198,ONEOK Inc.,OKE,0.116386,66.85,0.0
+199,State Street Corporation,STT,0.112525,70.1,0.0
+200,PPG Industries Inc.,PPG,0.111996,110.03,0.0
+201,Consolidated Edison Inc.,ED,0.111454,84.84,0.0
+202,Southwest Airlines Co.,LUV,0.11137,51.5,0.13
+203,Ingersoll-Rand Plc,IR,0.1096,106.1,0.0
+204,Agilent Technologies Inc.,A,0.107926,81.1,0.0
+205,Hilton Worldwide Holdings Inc,HLT,0.10701,85.76,0.0
+206,Paychex Inc.,PAYX,0.106617,79.23,0.0
+207,Halliburton Company,HAL,0.105694,27.97,0.0
+208,Twenty-First Century Fox Inc. Class B,FOX,0.10554,51.6,-0.12
+209,Zimmer Biomet Holdings Inc.,ZBH,0.105463,125.92,0.0
+210,M&T Bank Corporation,MTB,0.105156,172.52,0.0
+211,Discover Financial Services,DFS,0.104645,73.16,0.0
+212,Fortive Corp.,FTV,0.103131,82.54,0.0
+213,T. Rowe Price Group,TROW,0.10298,102.44,0.0
+214,Centene Corporation,CNC,0.102765,59.15,0.0
+215,WEC Energy Group Inc,WEC,0.102721,78.68,-0.2
+216,Archer-Daniels-Midland Company,ADM,0.102718,43.18,0.0
+217,AutoZone Inc.,AZO,0.101831,960.1,-2.13
+218,PACCAR Inc,PCAR,0.101018,67.65,0.0
+219,Dollar Tree Inc.,DLTR,0.100379,99.86,0.0
+220,Digital Realty Trust Inc.,DLR,0.100224,115.23,0.0
+221,Monster Beverage Corporation,MNST,0.100089,60.27,0.0
+222,Cummins Inc.,CMI,0.099625,157.41,0.0
+223,PPL Corporation,PPL,0.099437,32.74,0.0
+224,McKesson Corporation,MCK,0.099181,119.26,0.0
+225,Pioneer Natural Resources Company,PXD,0.097496,135.66,-0.01
+226,Motorola Solutions Inc.,MSI,0.097134,140.64,0.0
+227,Carnival Corporation,CCL,0.096141,56.99,0.38
+228,IQVIA Holdings Inc,IQV,0.09582,141.53,0.0
+229,Anadarko Petroleum Corporation,APC,0.095711,44.9,0.35
+230,DTE Energy Company,DTE,0.095318,123.98,0.0
+231,Ventas Inc.,VTR,0.095025,62.59,0.0
+232,Willis Towers Watson Public Limited Company,WLTW,0.094821,173.65,0.0
+233,Parker-Hannifin Corporation,PH,0.094777,170.77,0.0
+234,Hewlett Packard Enterprise Co.,HPE,0.094597,15.8,-0.27
+235,Synchrony Financial,SYF,0.094518,33.33,0.02
+236,Twitter Inc.,TWTR,0.094287,31.18,-0.04
+237,Eversource Energy,ES,0.094258,71.73,0.0
+238,Rockwell Automation Inc.,ROK,0.093748,179.33,0.0
+239,SBA Communications Corp. Class A,SBAC,0.091637,190.95,0.0
+240,Aptiv PLC,APTV,0.090674,81.96,0.0
+241,TransDigm Group Incorporated,TDG,0.090269,439.87,0.0
+242,Realty Income Corporation,O,0.089947,71.48,0.24
+243,Northern Trust Corporation,NTRS,0.089089,94.92,0.0
+244,Verisk Analytics Inc,VRSK,0.089049,128.43,0.0
+245,Global Payments Inc.,GPN,0.088578,134.12,0.0
+246,FleetCor Technologies Inc.,FLT,0.088009,239.27,0.0
+247,Concho Resources Inc.,CXO,0.087646,103.5,-0.05
+248,Boston Properties Inc.,BXP,0.087544,132.52,-0.22
+249,Edison International,EIX,0.08753,63.92,0.0
+250,Clorox Company,CLX,0.086465,160.67,0.0
+251,Stanley Black & Decker Inc.,SWK,0.085484,131.51,0.0
+252,Advanced Micro Devices Inc.,AMD,0.08504,23.35,0.06
+253,FirstEnergy Corp.,FE,0.084534,41.23,0.0
+254,Royal Caribbean Cruises Ltd.,RCL,0.084117,117.18,0.0
+255,Kraft Heinz Company,KHC,0.083617,32.06,-0.03
+256,Ball Corporation,BLL,0.083362,57.48,-0.02
+257,Kroger Co.,KR,0.082961,24.4,0.04
+258,Microchip Technology Incorporated,MCHP,0.08277,86.89,0.79
+259,VeriSign Inc.,VRSN,0.082234,181.62,0.0
+260,IHS Markit Ltd.,INFO,0.081828,54.52,0.0
+261,Weyerhaeuser Company,WY,0.081167,25.53,0.0
+262,Tyson Foods Inc. Class A,TSN,0.081024,65.22,0.0
+263,International Paper Company,IP,0.080911,45.63,0.12
+264,Essex Property Trust Inc.,ESS,0.080612,289.4,0.0
+265,American Water Works Company Inc.,AWK,0.079916,105.81,0.0
+266,Fifth Third Bancorp,FITB,0.079907,28.32,0.0
+267,Harris Corporation,HRS,0.079778,160.68,0.0
+268,Cerner Corporation,CERN,0.079305,57.91,0.0
+269,Waters Corporation,WAT,0.078739,244.97,0.0
+270,United Continental Holdings Inc.,UAL,0.078681,81.7,0.01
+271,Nucor Corporation,NUE,0.078529,58.53,0.0
+272,AMETEK Inc.,AME,0.078312,80.81,0.0
+273,DXC Technology Co.,DXC,0.077375,65.75,0.0
+274,KeyCorp,KEY,0.077255,17.3,-0.08
+275,KLA-Tencor Corporation,KLAC,0.077194,119.92,0.3
+276,IDEXX Laboratories Inc.,IDXX,0.076982,216.21,0.0
+277,Align Technology Inc.,ALGN,0.076386,252.33,0.0
+278,Freeport-McMoRan Inc.,FCX,0.075344,12.42,0.07
+279,Fastenal Company,FAST,0.075024,62.28,0.0
+280,Ulta Beauty Inc,ULTA,0.07483,338.9,0.49
+281,Newmont Mining Corporation,NEM,0.074784,33.11,-0.03
+282,Ameriprise Financial Inc.,AMP,0.074736,129.05,0.0
+283,Cintas Corporation,CTAS,0.074303,204.55,-1.0
+284,Ameren Corporation,AEE,0.074186,73.04,0.0
+285,Mettler-Toledo International Inc.,MTD,0.074139,708.58,0.0
+286,Hartford Financial Services Group Inc.,HIG,0.073307,48.82,0.0
+287,First Republic Bank,FRC,0.07328,103.56,0.0
+288,Republic Services Inc.,RSG,0.072576,78.63,0.0
+289,Cadence Design Systems Inc.,CDNS,0.072534,60.99,0.0
+290,NetApp Inc.,NTAP,0.071983,68.0,-0.06
+291,Entergy Corporation,ETR,0.07198,94.66,0.0
+292,Citizens Financial Group Inc.,CFG,0.071809,35.87,0.0
+293,Omnicom Group Inc,OMC,0.071485,75.47,0.0
+294,McCormick & Company Incorporated,MKC,0.071316,139.99,0.0
+295,MSCI Inc. Class A,MSCI,0.069865,189.58,0.0
+296,Regions Financial Corporation,RF,0.069229,15.74,0.0
+297,CBS Corporation Class B,CBS,0.068802,47.7,0.0
+298,Church & Dwight Co. Inc.,CHD,0.068669,67.4,0.0
+299,Best Buy Co. Inc.,BBY,0.068443,69.63,0.0
+300,L3 Technologies Inc,LLL,0.06778,207.07,0.0
+301,Diamondback Energy Inc.,FANG,0.06753,102.39,0.0
+302,Keysight Technologies Inc,KEYS,0.067166,85.98,0.0
+303,Synopsys Inc.,SNPS,0.067066,110.12,0.95
+304,CBRE Group Inc. Class A,CBRE,0.066811,50.64,0.0
+305,Chipotle Mexican Grill Inc.,CMG,0.066692,639.16,0.16
+306,Total System Services Inc.,TSS,0.066353,94.71,0.36
+307,CMS Energy Corporation,CMS,0.065869,55.53,0.0
+308,Genuine Parts Company,GPC,0.065726,107.06,0.01
+309,Laboratory Corporation of America Holdings,LH,0.065609,154.36,0.0
+310,Evergy Inc.,EVRG,0.065098,57.6,-0.07
+311,Hershey Company,HSY,0.06506,110.38,-0.41
+312,Cardinal Health Inc.,CAH,0.06425,50.27,0.0
+313,Arista Networks Inc.,ANET,0.063745,296.33,-0.43
+314,ANSYS Inc.,ANSS,0.06373,180.38,0.0
+315,Huntington Bancshares Incorporated,HBAN,0.063415,13.87,0.12
+316,HCP Inc.,HCP,0.063343,31.13,-0.0
+317,Alexandria Real Estate Equities Inc.,ARE,0.063208,140.52,-0.0
+318,CenterPoint Energy Inc.,CNP,0.063021,30.81,0.0
+319,Maxim Integrated Products Inc.,MXIM,0.062848,54.14,0.0
+320,Incyte Corporation,INCY,0.062197,84.8,0.0
+321,Symantec Corporation,SYMC,0.06207,22.7,-0.32
+322,Marathon Oil Corporation,MRO,0.061858,17.27,0.0
+323,Vulcan Materials Company,VMC,0.061689,111.23,-1.36
+324,ABIOMED Inc.,ABMD,0.061611,333.23,0.0
+325,Hess Corporation,HES,0.061556,58.25,0.0
+326,Skyworks Solutions Inc.,SWKS,0.061373,83.5,-0.26
+327,Mylan N.V.,MYL,0.06087,28.09,0.0
+328,Arthur J. Gallagher & Co.,AJG,0.060815,80.28,0.0
+329,Cooper Companies Inc.,COO,0.060628,295.23,0.0
+330,Expedia Group Inc.,EXPE,0.060457,121.56,0.0
+331,ResMed Inc.,RMD,0.060304,100.37,0.0
+332,Host Hotels & Resorts Inc.,HST,0.059754,19.16,0.0
+333,Baker Hughes a GE Company Class A,BHGE,0.059359,27.85,0.0
+334,Teleflex Incorporated,TFX,0.059194,302.9,0.0
+335,Lennar Corporation Class A,LEN,0.059103,47.73,0.0
+336,D.R. Horton Inc.,DHI,0.05878,40.76,0.0
+337,Devon Energy Corporation,DVN,0.058632,29.75,0.11
+338,Western Digital Corporation,WDC,0.058355,48.08,-0.02
+339,Principal Financial Group Inc.,PFG,0.057778,52.17,0.0
+340,Xylem Inc.,XYL,0.057716,76.74,0.0
+341,Darden Restaurants Inc.,DRI,0.057545,113.95,3.29
+342,Kellogg Company,K,0.057447,54.35,0.08
+343,MGM Resorts International,MGM,0.057089,26.05,0.03
+344,W.W. Grainger Inc.,GWW,0.057001,297.18,0.0
+345,Expeditors International of Washington Inc.,EXPD,0.056581,76.01,0.0
+346,Dover Corporation,DOV,0.056519,90.69,0.0
+347,Comerica Incorporated,CMA,0.056348,82.27,0.0
+348,Lincoln National Corporation,LNC,0.056346,62.72,0.0
+349,Loews Corporation,L,0.05622,47.78,0.0
+350,Equifax Inc.,EFX,0.055623,111.02,0.0
+351,American Airlines Group Inc.,AAL,0.055461,31.54,0.11
+352,Celanese Corporation,CE,0.055173,101.23,0.0
+353,Apache Corporation,APA,0.05495,34.2,-0.25
+354,Gartner Inc.,IT,0.054935,145.04,0.0
+355,Citrix Systems Inc.,CTXS,0.054922,100.88,0.0
+356,SVB Financial Group,SIVB,0.054463,246.21,0.0
+357,Cincinnati Financial Corporation,CINF,0.054432,85.62,0.0
+358,Textron Inc.,TXT,0.054323,51.78,0.0
+359,Hologic Inc.,HOLX,0.054314,47.63,0.0
+360,AmerisourceBergen Corporation,ABC,0.053643,80.18,0.0
+361,E*TRADE Financial Corporation,ETFC,0.053543,49.02,0.0
+362,Extra Space Storage Inc.,EXR,0.053368,99.78,0.0
+363,International Flavors & Fragrances Inc.,IFF,0.053332,124.59,0.0
+364,Varian Medical Systems Inc.,VAR,0.0531,136.6,0.0
+365,UDR Inc.,UDR,0.052916,45.13,-0.0
+366,C.H. Robinson Worldwide Inc.,CHRW,0.052307,89.0,0.0
+367,Seagate Technology PLC,STX,0.051972,47.5,-0.18
+368,Mid-America Apartment Communities Inc.,MAA,0.05164,107.67,0.0
+369,NRG Energy Inc.,NRG,0.051542,41.97,0.0
+370,Fortinet Inc.,FTNT,0.051124,83.27,0.01
+371,Norwegian Cruise Line Holdings Ltd.,NCLH,0.051105,56.08,0.53
+372,Broadridge Financial Solutions Inc.,BR,0.050892,103.55,0.0
+373,WellCare Health Plans Inc.,WCG,0.050862,240.08,0.0
+374,Atmos Energy Corporation,ATO,0.050626,101.51,0.0
+375,Copart Inc.,CPRT,0.050441,59.03,0.0
+376,Martin Marietta Materials Inc.,MLM,0.050436,193.5,0.0
+377,AES Corporation,AES,0.050423,18.31,0.0
+378,Masco Corporation,MAS,0.05041,38.98,0.0
+379,Akamai Technologies Inc.,AKAM,0.05027,72.75,0.28
+380,Quest Diagnostics Incorporated,DGX,0.050085,88.45,0.0
+381,Vornado Realty Trust,VNO,0.049679,67.29,0.0
+382,J.M. Smucker Company,SJM,0.049447,105.58,0.0
+383,Kansas City Southern,KSU,0.049434,114.5,0.0
+384,Hormel Foods Corporation,HRL,0.048943,42.56,0.0
+385,Universal Health Services Inc. Class B,UHS,0.048641,134.24,0.0
+386,Cabot Oil & Gas Corporation,COG,0.048471,25.93,0.0
+387,Kohl's Corporation,KSS,0.048363,68.29,0.31
+388,Advance Auto Parts Inc.,AAP,0.047879,154.84,0.0
+389,CenturyLink Inc.,CTL,0.047774,12.1,0.01
+390,Wynn Resorts Limited,WYNN,0.047756,116.2,0.41
+391,Molson Coors Brewing Company Class B,TAP,0.047748,60.49,-0.33
+392,Conagra Brands Inc.,CAG,0.047498,23.09,0.0
+393,Eastman Chemical Company,EMN,0.047361,79.63,0.99
+394,Regency Centers Corporation,REG,0.046724,64.76,0.0
+395,Tractor Supply Company,TSCO,0.046281,89.46,0.0
+396,Alliant Energy Corp,LNT,0.046231,47.4,0.0
+397,DENTSPLY SIRONA Inc.,XRAY,0.04606,48.9,-0.19
+398,Duke Realty Corporation,DRE,0.045971,30.57,0.0
+399,Noble Energy Inc.,NBL,0.045873,23.1,0.0
+400,Raymond James Financial Inc.,RJF,0.045454,81.89,0.0
+401,CarMax Inc.,KMX,0.045305,60.52,-0.54
+402,Cboe Global Markets Inc,CBOE,0.044756,97.06,0.0
+403,Pinnacle West Capital Corporation,PNW,0.044637,96.15,0.0
+404,Jack Henry & Associates Inc.,JKHY,0.044412,137.24,0.0
+405,Take-Two Interactive Software Inc.,TTWO,0.044326,93.35,-0.2
+406,Tiffany & Co.,TIF,0.043922,97.15,0.59
+407,National Oilwell Varco Inc.,NOV,0.04331,26.48,0.0
+408,FMC Corporation,FMC,0.043301,77.16,-0.08
+409,PerkinElmer Inc.,PKI,0.042969,94.04,0.0
+410,NiSource Inc,NI,0.042703,27.89,0.0
+411,Lamb Weston Holdings Inc.,LW,0.042675,68.19,-1.32
+412,Hasbro Inc.,HAS,0.042636,86.72,0.0
+413,United Rentals Inc.,URI,0.042481,120.13,-0.01
+414,Mosaic Company,MOS,0.042426,28.38,-0.33
+415,Garmin Ltd.,GRMN,0.042342,83.25,0.0
+416,Viacom Inc. Class B,VIAB,0.042215,27.99,0.0
+417,WestRock Company,WRK,0.042135,37.55,0.0
+418,Franklin Resources Inc.,BEN,0.041954,33.32,0.0
+419,Iron Mountain Inc.,IRM,0.041946,34.94,0.01
+420,TechnipFMC Plc,FTI,0.04189,22.91,0.13
+421,CF Industries Holdings Inc.,CF,0.041831,43.05,0.0
+422,Westinghouse Air Brake Technologies Corporation,WAB,0.041199,71.49,0.37
+423,Nielsen Holdings Plc,NLSN,0.041076,26.95,0.0
+424,Federal Realty Investment Trust,FRT,0.040953,132.68,0.0
+425,Nasdaq Inc.,NDAQ,0.040734,83.2,-0.35
+426,Avery Dennison Corporation,AVY,0.040267,110.21,0.0
+427,Zions Bancorporation N.A.,ZION,0.040218,49.16,0.0
+428,Tapestry Inc.,TPR,0.039935,32.25,0.05
+429,Discovery Inc. Class C,DISCK,0.039687,25.9,0.0
+430,F5 Networks Inc.,FFIV,0.039283,153.69,0.0
+431,Juniper Networks Inc.,JNPR,0.039114,26.84,0.0
+432,Packaging Corporation of America,PKG,0.03908,98.75,2.57
+433,Albemarle Corporation,ALB,0.038751,85.42,0.0
+434,Henry Schein Inc.,HSIC,0.038072,59.29,0.0
+435,J.B. Hunt Transport Services Inc.,JBHT,0.037873,103.3,0.0
+436,Huntington Ingalls Industries Inc.,HII,0.037794,204.41,0.0
+437,Everest Re Group Ltd.,RE,0.03775,219.05,0.0
+438,Whirlpool Corporation,WHR,0.03766,134.0,0.82
+439,LKQ Corporation,LKQ,0.037414,27.86,0.0
+440,Snap-on Incorporated,SNA,0.037313,155.68,0.0
+441,Jacobs Engineering Group Inc.,JEC,0.036589,73.81,0.0
+442,PVH Corp.,PVH,0.036458,110.51,0.0
+443,Interpublic Group of Companies Inc.,IPG,0.036236,22.34,0.0
+444,Torchmark Corporation,TMK,0.036167,83.11,0.0
+445,Qorvo Inc.,QRVO,0.036082,69.66,0.0
+446,HollyFrontier Corporation,HFC,0.035659,52.2,0.0
+447,Allegion PLC,ALLE,0.035571,88.41,0.0
+448,Brown-Forman Corporation Class B,BF.B,0.035521,50.19,-0.51
+449,Mohawk Industries Inc.,MHK,0.034403,128.57,0.0
+450,Arconic Inc.,ARNC,0.03436,18.99,0.0
+451,Western Union Company,WU,0.034284,18.35,0.0
+452,Alliance Data Systems Corporation,ADS,0.033926,172.41,0.0
+453,Robert Half International Inc.,RHI,0.033682,65.93,0.0
+454,SL Green Realty Corp.,SLG,0.033351,90.38,0.0
+455,Invesco Ltd.,IVZ,0.033334,19.8,0.02
+456,Unum Group,UNM,0.033292,36.38,0.0
+457,BorgWarner Inc.,BWA,0.033175,37.81,0.0
+458,Apartment Investment and Management Company Class A,AIV,0.032523,50.78,0.0
+459,Kimco Realty Corporation,KIM,0.031894,17.67,0.01
+460,DISH Network Corporation Class A,DISH,0.031272,32.57,0.0
+461,A. O. Smith Corporation,AOS,0.030969,51.32,0.0
+462,Macy's Inc,M,0.030351,23.66,-0.05
+463,Sealed Air Corporation,SEE,0.030128,45.3,0.0
+464,PulteGroup Inc.,PHM,0.029831,26.87,0.0
+465,Pentair plc,PNR,0.029459,42.62,0.0
+466,Foot Locker Inc.,FL,0.029232,58.98,0.0
+467,Xerox Corporation,XRX,0.029147,31.55,-0.06
+468,FLIR Systems Inc.,FLIR,0.029077,50.14,0.0
+469,Capri Holdings Limited,CPRI,0.029064,45.94,0.01
+470,Ralph Lauren Corporation Class A,RL,0.028877,120.78,0.0
+471,Alaska Air Group Inc.,ALK,0.028692,55.37,-0.39
+472,DaVita Inc.,DVA,0.028649,53.53,0.0
+473,Campbell Soup Company,CPB,0.028578,35.64,-0.37
+474,Newell Brands Inc,NWL,0.028318,15.54,-0.02
+475,Cimarex Energy Co.,XEC,0.028193,70.06,0.0
+476,Hanesbrands Inc.,HBI,0.027573,17.6,-0.03
+477,People's United Financial Inc.,PBCT,0.027433,17.36,0.0
+478,Fortune Brands Home & Security Inc.,FBHS,0.027415,45.94,0.0
+479,Nektar Therapeutics,NKTR,0.026428,35.0,-0.53
+480,Harley-Davidson Inc.,HOG,0.025566,36.6,0.0
+481,Rollins Inc.,ROL,0.025547,40.46,0.0
+482,L Brands Inc.,LB,0.025241,26.58,0.0
+483,Helmerich & Payne Inc.,HP,0.025229,54.41,-0.14
+484,Perrigo Co. Plc,PRGO,0.025099,48.15,0.0
+485,Flowserve Corporation,FLS,0.024399,44.28,0.0
+486,Affiliated Managers Group Inc.,AMG,0.024053,109.35,0.0
+487,Leggett & Platt Incorporated,LEG,0.023881,43.0,0.0
+488,Jefferies Financial Group Inc.,JEF,0.023805,19.43,0.0
+489,Gap Inc.,GPS,0.023565,25.29,0.0
+490,Quanta Services Inc.,PWR,0.022898,37.35,0.0
+491,IPG Photonics Corporation,IPGP,0.022693,153.61,0.0
+492,TripAdvisor Inc.,TRIP,0.022292,51.59,0.0
+493,Fluor Corporation,FLR,0.022148,37.7,-0.04
+494,Assurant Inc.,AIZ,0.02184,98.73,0.0
+495,Nordstrom Inc.,JWN,0.021469,43.75,0.01
+496,Coty Inc. Class A,COTY,0.020867,10.89,0.0
+497,Mattel Inc.,MAT,0.020857,14.47,0.0
+498,H&R Block Inc.,HRB,0.02083,24.35,0.0
+499,News Corporation Class A,NWSA,0.020312,12.64,0.0
+500,Macerich Company,MAC,0.019587,42.63,0.0
+501,Brighthouse Financial Inc.,BHF,0.019494,39.57,0.0
+502,Discovery Inc. Class A,DISCA,0.017947,27.43,0.0
+503,Under Armour Inc. Class A,UAA,0.017426,22.19,-0.02
+504,Under Armour Inc. Class C,UA,0.015707,19.87,0.07
+505,News Corporation Class B,NWS,0.006142,12.74,0.0

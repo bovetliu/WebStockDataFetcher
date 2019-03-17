@@ -1,10 +1,9 @@
+import os
 from typing import List, Dict
 
 import logging
 import datetime
 from selenium import webdriver
-from time import sleep
-import pytz
 from datetime import date, datetime
 from collections import OrderedDict
 import operator
@@ -15,33 +14,32 @@ from selenium.common.exceptions import NoSuchElementException
 from bs4 import BeautifulSoup
 
 
-from webstkdatafetcher import constants
-from webstkdatafetcher import utility
+from webstkdatafetcher import utility, constants, logic
 from webstkdatafetcher.data_connection import mysql_related
-
-
 
 
 def start_scraping_yahoo_fin_statistics(output: str = None,
                                         clear_previous_content: bool = False,
                                         headless: bool = False,
-                                        db_config_dict: dict = None):
+                                        db_config_dict: dict = None,
+                                        stock_collection: str = 'sp500'):
     """
 
     :param output: whether write content to an output
     :param clear_previous_content: whether clear previous content in file specified in output, if any
     :param headless:
     :param db_config_dict:
+    :param stock_collection: sp500, or nasdaq100, or dowjones
     :return:
     """
     chrome_option = webdriver.ChromeOptions()
     # invokes headless setter
     chrome_option.headless = headless
     chrome_option.add_argument("--window-size=1920x1080")
-    driver = None
     output_file = None
     mysql_helper = mysql_related.MySqlHelper(reuse_connection=True, db_config_dict=db_config_dict)
     should_commit = False
+    mysql_table = "yahoo_fin_statistics"
     try:
         if output:
             output_file = open(output, 'w+')
@@ -53,15 +51,20 @@ def start_scraping_yahoo_fin_statistics(output: str = None,
         driver = webdriver.Chrome(options=chrome_option)
         driver.maximize_window()
 
-        stocks = select_stock_symbol()
+        stocks = logic.get_slickcharts_stock_constituents(driver, stock_collection)
+        stocks = [stock[2] for stock in stocks[1:401]]
+        # stocks = ["LIN"]
+        print(stocks)
         for i in range(len(stocks)):
             stock = stocks[i]
+            if "." in stock:
+                stock = stock.replace(".", "-")
             url = "https://finance.yahoo.com/quote/{0}/key-statistics?p={0}".format(stock)
             logging.info("get statistics url {}".format(url))
             driver.get(url)
             statistics_html = driver.find_element_by_id("Col1-0-KeyStatistics-Proxy").get_attribute("outerHTML")
-            # logging.info(statistics_html)
-            extract_info_from_stat_html(statistics_html)
+            extracted_data = extract_info_from_stat_html(statistics_html)
+
             quote_market_notice = \
                 driver.find_element_by_id("quote-market-notice").find_element_by_tag_name("span").text.strip()
             effective_time_str = quote_market_notice.strip("At close: ").strip("EDT").strip()
@@ -69,6 +72,13 @@ def start_scraping_yahoo_fin_statistics(output: str = None,
             effective_date_time = datetime.strptime(effective_time_str, "%B %d %I:%M%p").replace(datetime.now().year)
             print("effective_date_time:{}".format(effective_date_time.strftime("%Y-%m-%dT%H:%M:%S")))
 
+            db_ready_extracted_data = convert_to_db_ready(extracted_data, stock, effective_date_time.date())
+            mysql_helper.delete_from_table(mysql_table, col_val_dict={
+                "symbol": stock,
+                "record_date": effective_date_time.date().strftime("%Y-%m-%d")
+            })
+            mysql_helper.insert_one_record(mysql_table, col_val_dict=db_ready_extracted_data)
+        should_commit = True
     finally:
         if output_file is not None:
             output_file.close()
@@ -82,12 +92,17 @@ def select_stock_symbol(collection_name: str='BA'):
         "nasdaq100"
     :return:
     """
-    if collection_name not in ["sp500", "nasdaq100"]:
-        return [collection_name.upper()]
-    # TODO(Bowei) https://www.slickcharts.com/sp500, https://www.slickcharts.com/nasdaq100,
-    # https://www.slickcharts.com/dowjones
-    #
-    raise Exception("currently does not support sp500, nasdaq100")
+    if collection_name in ["sp500", "nasdaq100"]:
+        raise Exception("currently does not support sp500, nasdaq100")
+
+    selection = []
+    try:
+        with open(os.path.join(constants.main_resources, collection_name), 'r') as selection_file:
+            for line in selection_file:
+                selection.append(line.strip())
+            return selection
+    except FileNotFoundError:
+        return [collection_name]
 
 
 def extract_info_from_stat_html(statistics_html: str) -> OrderedDict:
@@ -111,36 +126,53 @@ def extract_info_from_stat_html(statistics_html: str) -> OrderedDict:
             value_str = tds[1].string.strip()
             value = None
             field_name = tds[0].span.string.strip()
-            if value_str.endswith("B"):
-                value = float(value_str.strip("B")) * 1000000000
-            elif value_str.endswith("M"):
-                value = float(value_str.strip("M")) * 1000000
-            elif value_str.endswith("T"):
-                value = float(value_str.strip("T")) * 1000
-            elif utility.is_number_tryexcept(value_str):
-                value = float(value_str)
-            elif value_str.endswith("%"):
-                value = round(float(value_str.strip("%")) * 0.01, 4)
-            elif "," in value_str and "." not in value_str:
-                try:
-                    value = datetime.strptime(value_str, "%b %d, %Y").date().strftime("%Y-%m-%d")
-                except ValueError as err:
-                    logging.error(err)
-                    pass
-            elif "," in value_str and "." in value_str:
-                value = float(value_str.replace(",", ""))
-            elif "Last Split Factor" in field_name and "/" in value_str:
-                value = float(eval(value_str))
-            else:
-                value_str_not_parsed.append(value_str)
-            tbr[field_name] = value if value is not None else value_str
-            print("field_name: {}, value: {}".format(field_name, value))
+            try:
+                if "N/A" in value_str:
+                    value = None
+                elif value_str.endswith("B"):
+                    value = float(value_str.strip("B")) * 1000000000
+                elif value_str.endswith("M"):
+                    value = float(value_str.strip("M")) * 1000000
+                elif value_str.endswith("k"):
+                    value = float(value_str.strip("k")) * 1000
+                elif utility.is_number_tryexcept(value_str):
+                    value = float(value_str)
+                elif value_str.endswith("%"):
 
-    print("value_str_not_parsed: {}".format(value_str_not_parsed))
+                    try:
+                        value = round(float(value_str.replace(",", "").strip("%")) * 0.01, 4)
+                    except ValueError as ve:
+                        logging.error("ValueError caught : %s", str(ve))
+                        if "∞" in value_str:
+                            value = None
+                        else:
+                            raise ve
+                elif "," in value_str and "." not in value_str:
+                    try:
+                        value = datetime.strptime(value_str, "%b %d, %Y").date().strftime("%Y-%m-%d")
+                    except ValueError as err:
+                        logging.error(err)
+                        pass
+                elif "," in value_str and "." in value_str:
+                    value = float(value_str.replace(",", ""))
+                elif "Last Split Factor" in field_name and "/" in value_str:
+                    value = value_str
+                else:
+                    value_str_not_parsed.append(value_str)
+                if value_str in ["N/A"]:
+                    tbr[field_name] = None
+                else:
+                    tbr[field_name] = value if value is not None else value_str
+            except ValueError as ve:
+                logging.error("field_name: {}, value_str: {}", field_name, value_str)
+                logging.error(ve)
+                raise ve
+
+    logging.info("value_str_not_parsed: {}".format(value_str_not_parsed))
     return tbr
 
 
-def convert_to_db_ready(scraped_data: Dict, record_date):
+def convert_to_db_ready(scraped_data: Dict, symbol: str, record_date):
     short_data = {}
     interested_fields = [
         "Shares Short",
@@ -151,12 +183,16 @@ def convert_to_db_ready(scraped_data: Dict, record_date):
     short_stat_record_date = None
     for field_name in scraped_data.keys():
         for interested_field in interested_fields:
-            if interested_field in field_name:
+            if interested_field in field_name and "prior" not in field_name:
                 short_data[interested_field] = scraped_data[field_name]
                 if short_stat_record_date is None:
                     short_stat_record_date = field_name.strip(interested_field).strip()
-                    short_stat_record_date = datetime.strptime(short_stat_record_date, "(%b %d, %Y)")
-                    short_data["Short Stat Record Date"] = short_stat_record_date.strftime("%Y-%m-%d")
+                    if "(" not in short_stat_record_date:
+                        short_stat_record_date = None
+                        short_data["Short Stat Record Date"] = None
+                    else:
+                        short_stat_record_date = datetime.strptime(short_stat_record_date, "(%b %d, %Y)")
+                        short_data["Short Stat Record Date"] = short_stat_record_date.strftime("%Y-%m-%d")
                 break
     result = {
         # Valuation Measures
@@ -216,7 +252,8 @@ def convert_to_db_ready(scraped_data: Dict, record_date):
         "short_percentage_of_shares_outstanding": short_data["Short % of Shares Outstanding"],
 
         # Record Date
-        "record_date": record_date.strftime("%Y-%m-%d") if isinstance(record_date, date) else record_date
+        "record_date": record_date.strftime("%Y-%m-%d") if isinstance(record_date, date) else record_date,
+        "symbol": symbol
     }
     return result
 

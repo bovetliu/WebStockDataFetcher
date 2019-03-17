@@ -20,10 +20,13 @@ class TestYahooFinStatisticsModule(unittest.TestCase):
 
     def __init__(self, arg):
         super().__init__(arg)
-        logging.basicConfig(level=logging.INFO, stream=sys.stdout)
+        logging.basicConfig(format='%(asctime)s %(levelname)-7s [%(filename)s:%(lineno)d] %(message)s',
+                            datefmt='%d-%m-%Y:%H:%M:%S',
+                            level=logging.INFO,
+                            stream=sys.stdout)
 
     def test_start_scraping_yahoo_fin_statistics(self):
-        yahoo_fin_statistics.start_scraping_yahoo_fin_statistics(None, False, True, None)
+        yahoo_fin_statistics.start_scraping_yahoo_fin_statistics(None, False, True, None, "sp500")
 
     def test_extract_info_from_stat_html(self):
         test_html = """
@@ -558,13 +561,22 @@ class TestYahooFinStatisticsModule(unittest.TestCase):
             "Last Split Date": "1997-06-09"
         }
         test_record_date = date(2019, 3, 15)
-        test_result = yahoo_fin_statistics.convert_to_db_ready(test_data, test_record_date)
+        test_result = yahoo_fin_statistics.convert_to_db_ready(test_data, "BA", test_record_date)
         self.assertEqual(test_result["record_date"], "2019-03-15")
         self.assertAlmostEqual(test_result["quarterly_earnings_growth_yoy"], 0.031, 3)
 
-        test_result = yahoo_fin_statistics.convert_to_db_ready(test_data, "2019-03-15")
+        test_result = yahoo_fin_statistics.convert_to_db_ready(test_data, "BA", "2019-03-15")
         self.assertEqual(test_result["record_date"], "2019-03-15")
         self.assertAlmostEqual(test_result["quarterly_earnings_growth_yoy"], 0.031, 3)
-        print(json.dumps(test_result, indent=2))
+        # print(json.dumps(test_result, indent=2))
 
+    def test_select_stock_symbol(self):
+        result = yahoo_fin_statistics.select_stock_symbol()
+        self.assertIsInstance(result, list)
+        self.assertEqual(result[0], 'BA')
+        result = yahoo_fin_statistics.select_stock_symbol("stock_selection_1.txt")
+        self.assertIsInstance(result, list)
+        self.assertEqual(len(result), 10)
 
+    def test_something(self):
+        something = float(-7.64)
