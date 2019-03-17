@@ -92,3 +92,8 @@ def is_number_tryexcept(s):
         return True
     except ValueError:
         return False
+
+
+def append_to_file(path, content):
+    with open(path, 'a') as output_file:
+        output_file.write(content)

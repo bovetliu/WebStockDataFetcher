@@ -8,3 +8,4 @@ venv
 src/main/resources/credential.json
 src/main/resources/remotedb.properties
 src/test/resources/chrome.log
+src/test/resources/error*.txt

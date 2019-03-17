@@ -1,18 +1,17 @@
 import os
-from typing import List, Dict
+from typing import Dict, List
 
 import logging
 import datetime
 from selenium import webdriver
 from datetime import date, datetime
 from collections import OrderedDict
-import operator
+from time import sleep
 
-from selenium.webdriver.remote.webdriver import WebDriver
-from selenium.common.exceptions import NoSuchElementException
+from selenium.common.exceptions import NoSuchElementException, StaleElementReferenceException
 
 from bs4 import BeautifulSoup
-
+from selenium.webdriver.remote.webdriver import WebDriver
 
 from webstkdatafetcher import utility, constants, logic
 from webstkdatafetcher.data_connection import mysql_related
@@ -39,7 +38,6 @@ def start_scraping_yahoo_fin_statistics(output: str = None,
     output_file = None
     mysql_helper = mysql_related.MySqlHelper(reuse_connection=True, db_config_dict=db_config_dict)
     should_commit = False
-    mysql_table = "yahoo_fin_statistics"
     try:
         if output:
             output_file = open(output, 'w+')
@@ -52,37 +50,68 @@ def start_scraping_yahoo_fin_statistics(output: str = None,
         driver.maximize_window()
 
         stocks = logic.get_slickcharts_stock_constituents(driver, stock_collection)
-        stocks = [stock[2] for stock in stocks[1:401]]
-        # stocks = ["LIN"]
-        print(stocks)
-        for i in range(len(stocks)):
-            stock = stocks[i]
-            if "." in stock:
-                stock = stock.replace(".", "-")
-            url = "https://finance.yahoo.com/quote/{0}/key-statistics?p={0}".format(stock)
-            logging.info("get statistics url {}".format(url))
-            driver.get(url)
-            statistics_html = driver.find_element_by_id("Col1-0-KeyStatistics-Proxy").get_attribute("outerHTML")
-            extracted_data = extract_info_from_stat_html(statistics_html)
-
-            quote_market_notice = \
-                driver.find_element_by_id("quote-market-notice").find_element_by_tag_name("span").text.strip()
-            effective_time_str = quote_market_notice.strip("At close: ").strip("EDT").strip()
-            # sample effective_time: March 15 4:00PM EDT
-            effective_date_time = datetime.strptime(effective_time_str, "%B %d %I:%M%p").replace(datetime.now().year)
-            print("effective_date_time:{}".format(effective_date_time.strftime("%Y-%m-%dT%H:%M:%S")))
-
-            db_ready_extracted_data = convert_to_db_ready(extracted_data, stock, effective_date_time.date())
-            mysql_helper.delete_from_table(mysql_table, col_val_dict={
-                "symbol": stock,
-                "record_date": effective_date_time.date().strftime("%Y-%m-%d")
-            })
-            mysql_helper.insert_one_record(mysql_table, col_val_dict=db_ready_extracted_data)
+        stocks = [stock[2] for stock in stocks[1:]]
+        need_retry = scrape_stocks(stocks, mysql_helper, driver)
+        logging.info("first retry list : %s", str(need_retry))
+        need_retry = scrape_stocks(need_retry, mysql_helper, driver)
+        logging.info("second retry list : %s", str(need_retry))
+        need_retry = scrape_stocks(need_retry, mysql_helper, driver)
+        logging.info("abort list : %s", str(need_retry))
         should_commit = True
     finally:
         if output_file is not None:
             output_file.close()
         mysql_helper.set_reuse_connection(False, should_commit)
+
+
+def scrape_stocks(stocks: List[str], mysql_helper, driver: WebDriver) -> List[str]:
+    mysql_table = "yahoo_fin_statistics"
+    logging.info(str(stocks))
+    need_retry = set([])
+    for stock in stocks:
+        if "." in stock:
+            stock = stock.replace(".", "-")
+        url = "https://finance.yahoo.com/quote/{0}/key-statistics?p={0}".format(stock)
+        for attempt in range(3):
+            try:
+                logging.info("going to get statistics url {}".format(url))
+                driver.get(url)
+                logging.info("have got URL.")
+                sleep((attempt - 0) * 3)
+                if attempt > 0:
+                    logging.info("slept %d seconds", (attempt - 0) * 3)
+
+                statistics_html = driver.find_element_by_id("Col1-0-KeyStatistics-Proxy").get_attribute("outerHTML")
+                extracted_data = extract_info_from_stat_html(statistics_html)
+                # logging.info("extracted tables")
+
+                quote_market_notice = \
+                    driver.find_element_by_id("quote-market-notice").find_element_by_tag_name("span").text.strip()
+                effective_time_str = quote_market_notice.strip("At close: ").strip("EDT").strip()
+                # sample effective_time: March 15 4:00PM EDT
+                effective_date_time = \
+                    datetime.strptime(effective_time_str, "%B %d %I:%M%p").replace(datetime.now().year)
+                logging.info("have parsed quote-market-notice, effective_date_time:{}"
+                             .format(effective_date_time.strftime("%Y-%m-%dT%H:%M:%S")))
+
+                db_ready_extracted_data = convert_to_db_ready(extracted_data, stock, effective_date_time.date())
+                # logging.info("convert_to_db_ready")
+                mysql_helper.delete_from_table(mysql_table, col_val_dict={
+                    "symbol": stock,
+                    "record_date": effective_date_time.date().strftime("%Y-%m-%d")
+                })
+                mysql_helper.insert_one_record(mysql_table, col_val_dict=db_ready_extracted_data)
+                break
+            except (NoSuchElementException, StaleElementReferenceException) as e:
+                logging.error("caught %s in %d, url: %s", str(type(e)), attempt, url)
+                # logging.error("output all html: \n%s", driver.page_source)
+                utility.append_to_file(
+                    os.path.join(constants.test_resources, "error_{}.txt".format(stock)),
+                    driver.page_source)
+                if attempt == 2:
+                    need_retry.add(stock)
+                continue
+    return list(need_retry)
 
 
 def select_stock_symbol(collection_name: str='BA'):
@@ -168,7 +197,7 @@ def extract_info_from_stat_html(statistics_html: str) -> OrderedDict:
                 logging.error(ve)
                 raise ve
 
-    logging.info("value_str_not_parsed: {}".format(value_str_not_parsed))
+    # logging.info("value_str_not_parsed: {}".format(value_str_not_parsed))
     return tbr
 
 
@@ -256,7 +285,3 @@ def convert_to_db_ready(scraped_data: Dict, symbol: str, record_date):
         "symbol": symbol
     }
     return result
-
-
-def get_valuation_measures(stats: Dict[str, str]):
-    pass

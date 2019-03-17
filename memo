@@ -103,3 +103,8 @@ Short List, link href: https://www.zacks.com/shortlist/
 Surprise Trader, link href: https://www.zacks.com/surprisetrader/
 TAZR, link href: https://www.zacks.com/tazr/
 
+
+
+select symbol, format(market_cap, 2) , trailing_p_e, record_date from yahoo_fin_statistics where trailing_p_e is not null ORDER by trailing_p_e limit 20;
+
+select symbol, concat('$', format(market_cap, 2)) , trailing_p_e, record_date from yahoo_fin_statistics where trailing_p_e is not null ORDER by trailing_p_e limit 20;

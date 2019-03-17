@@ -1,3 +1,4 @@
+import os
 import unittest
 from webstkdatafetcher import utility
 from webstkdatafetcher import constants
@@ -14,3 +15,17 @@ class TestUtility(unittest.TestCase):
 
     def test_null_safe_number_compare(self):
         self.assertNotEqual(0, utility.null_safe_number_compare(34.79, 34.78, 0.005))
+
+    def test_append_to_file(self):
+        path = os.path.join(constants.test_resources, "error.txt")
+        utility.append_to_file(path, "test\n")
+        found_test = False
+        with open(path, 'r') as read_error_out:
+            for line in read_error_out:
+                if not found_test and "test" in line:
+                    found_test = True
+                    break
+        self.assertTrue(found_test)
+        with open(path, 'w'):
+            pass
+
