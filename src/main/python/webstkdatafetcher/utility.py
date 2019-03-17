@@ -1,7 +1,14 @@
 import hashlib
 import math
 from collections import OrderedDict
-from datetime import date, datetime
+from datetime import date
+
+# used by
+__fmts = ('%Y', '%b %d, %Y', '%b %d, %Y', '%B %d, %Y', '%B %d %Y', '%m/%d/%Y', '%m/%d/%y', '%b %Y', '%B%Y', '%b %d,%Y')
+
+
+def is_date_string(string):
+    pass
 
 
 def get_content_of_file(path: str):
@@ -76,3 +83,12 @@ def remove_operation_suffix(record: dict):
     type_val = type_val.replace('_close', '')
     tbr['type'] = type_val
     return tbr
+
+
+def is_number_tryexcept(s):
+    """ Returns True is string is a number. """
+    try:
+        float(s)
+        return True
+    except ValueError:
+        return False
