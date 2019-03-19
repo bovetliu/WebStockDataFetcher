@@ -3,6 +3,7 @@ from typing import Dict, List
 
 import logging
 import datetime
+from random import shuffle
 from selenium import webdriver
 from datetime import date, datetime
 from collections import OrderedDict
@@ -51,9 +52,12 @@ def start_scraping_yahoo_fin_statistics(output: str = None,
 
         stocks = logic.get_slickcharts_stock_constituents(driver, stock_collection)
         stocks = [stock[2] for stock in stocks[1:]]
+        shuffle(stocks)
         need_retry = scrape_stocks(stocks, mysql_helper, driver)
+        shuffle(need_retry)
         logging.info("first retry list : %s", str(need_retry))
         need_retry = scrape_stocks(need_retry, mysql_helper, driver)
+        shuffle(need_retry)
         logging.info("second retry list : %s", str(need_retry))
         need_retry = scrape_stocks(need_retry, mysql_helper, driver)
         logging.info("abort list : %s", str(need_retry))
@@ -77,7 +81,7 @@ def scrape_stocks(stocks: List[str], mysql_helper, driver: WebDriver) -> List[st
                 logging.info("going to get statistics url {}".format(url))
                 driver.get(url)
                 logging.info("have got URL.")
-                sleep((attempt - 0) * 3)
+                sleep((attempt - 0) * 3 + 0.3)
                 if attempt > 0:
                     logging.info("slept %d seconds", (attempt - 0) * 3)
 
@@ -88,9 +92,17 @@ def scrape_stocks(stocks: List[str], mysql_helper, driver: WebDriver) -> List[st
                 quote_market_notice = \
                     driver.find_element_by_id("quote-market-notice").find_element_by_tag_name("span").text.strip()
                 effective_time_str = quote_market_notice.strip("At close: ").strip("EDT").strip()
-                # sample effective_time: March 15 4:00PM EDT
-                effective_date_time = \
-                    datetime.strptime(effective_time_str, "%B %d %I:%M%p").replace(datetime.now().year)
+                # sample effective_time: "March 15 4:00PM EDT" or "4:02PM EDT"
+                effective_date_time = None
+                try:
+                    effective_date_time = \
+                        datetime.strptime(effective_time_str, "%B %d %I:%M%p").replace(datetime.now().year)
+                except ValueError as ve:
+                    if "does not match format" in str(ve):
+                        now_datetime = datetime.now()
+                        effective_date_time = datetime.strptime(effective_time_str, "%I:%M%p")\
+                            .replace(year=now_datetime.year, month=now_datetime.month, day=now_datetime.day)
+
                 logging.info("have parsed quote-market-notice, effective_date_time:{}"
                              .format(effective_date_time.strftime("%Y-%m-%dT%H:%M:%S")))
 
