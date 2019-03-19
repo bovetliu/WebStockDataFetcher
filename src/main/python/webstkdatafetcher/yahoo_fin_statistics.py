@@ -102,6 +102,8 @@ def scrape_stocks(stocks: List[str], mysql_helper, driver: WebDriver) -> List[st
                         now_datetime = datetime.now()
                         effective_date_time = datetime.strptime(effective_time_str, "%I:%M%p")\
                             .replace(year=now_datetime.year, month=now_datetime.month, day=now_datetime.day)
+                    else:
+                        raise ve
 
                 logging.info("have parsed quote-market-notice, effective_date_time:{}"
                              .format(effective_date_time.strftime("%Y-%m-%dT%H:%M:%S")))
