@@ -26,7 +26,7 @@ class TestYahooFinStatisticsModule(unittest.TestCase):
                             stream=sys.stdout)
 
     def test_start_scraping_yahoo_fin_statistics(self):
-        yahoo_fin_statistics.start_scraping_yahoo_fin_statistics(None, False, True, None, "sp500")
+        yahoo_fin_statistics.start_scraping_yahoo_fin_statistics(None, True, None, "sp500")
 
     def test_extract_info_from_stat_html(self):
         test_html = """

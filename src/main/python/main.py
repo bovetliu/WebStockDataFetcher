@@ -1,6 +1,7 @@
 from webstkdatafetcher import logic
 from webstkdatafetcher import constants
 from webstkdatafetcher import utility
+from webstkdatafetcher import yahoo_fin_statistics
 from webstkdatafetcher.data_connection import mysql_related
 from os.path import join
 import logging
@@ -18,7 +19,7 @@ if __name__ == "__main__":
     # execute only if run as a script
     if len(sys.argv) > 3:
         print("usage: python3 src/main/python/main.py <usage> <optional_database_name: default zacks>")
-        print("acceptable <usage>: scrapezacks, scrapezacks_to_remote, email_content01")
+        print("acceptable <usage>: scrapezacks, scrapezacks_to_remote, yahoo_statistics yahoo_statistics_to_remote")
         print("acceptable <database_name>: any valid MySQL database name")
         exit(1)
     non_default_db_name = None
@@ -38,7 +39,11 @@ if __name__ == "__main__":
 
     # if use case is any of ["scrapezacks", "scrapezacks_to_remote", "deduplicate", "db_initialize"],
     # execute db_initialization.sql on target database.
-    if usecase.startswith('scrapezacks') or usecase.startswith('deduplicate') or usecase == 'db_initialize':
+    if usecase in ['scrapezacks',
+                   'scrapezacks_to_remote',
+                   'db_initialize',
+                   'yahoo_statistics',
+                   'yahoo_statistics_to_remote']:
         db_initialization_str = utility.get_content_of_file(join(constants.main_resources, "db_initialization.sql"))
         if non_default_db_name:
             db_initialization_str = db_initialization_str.replace("zacks", non_default_db_name)
@@ -57,12 +62,11 @@ if __name__ == "__main__":
     elif usecase.startswith("deduplicate"):
         mysql_helper = mysql_related.MySqlHelper(db_config_dict=db_config_dict)
         logic.deduplicate(mysql_helper)
-    elif usecase == 'email_content01':
-        email01_path = join(constants.test_resources, 'sample_email01.html')
-        logic.handle_zacks_email(utility.get_content_of_file(email01_path))
+    elif usecase.startswith('yahoo_statistics'):
+        yahoo_fin_statistics.start_scraping_yahoo_fin_statistics(None, True, db_config_dict, "sp500")
     elif usecase == 'db_initialize':
         pass
     else:
         print("usage: python3 src/main/python/main.py <usage> <optional_database_name: default zacks>")
-        print("acceptable <usage>: scrapezacks, scrapezacks_to_remote, email_content01")
+        print("acceptable <usage>: scrapezacks, scrapezacks_to_remote, yahoo_statistics, yahoo_statistics_to_remote")
         print("acceptable <database_name>: any valid MySQL database name")

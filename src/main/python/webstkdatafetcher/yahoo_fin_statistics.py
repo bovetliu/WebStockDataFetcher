@@ -18,15 +18,11 @@ from webstkdatafetcher import utility, constants, logic
 from webstkdatafetcher.data_connection import mysql_related
 
 
-def start_scraping_yahoo_fin_statistics(output: str = None,
-                                        clear_previous_content: bool = False,
-                                        headless: bool = False,
+def start_scraping_yahoo_fin_statistics(output_prefix: str = None, headless: bool = False,
                                         db_config_dict: dict = None,
                                         stock_collection: str = 'sp500'):
     """
-
-    :param output: whether write content to an output
-    :param clear_previous_content: whether clear previous content in file specified in output, if any
+    :param output_prefix, each error page source will be output to {output_prefix}_{stock}.txt
     :param headless:
     :param db_config_dict:
     :param stock_collection: sp500, or nasdaq100, or dowjones
@@ -36,39 +32,29 @@ def start_scraping_yahoo_fin_statistics(output: str = None,
     # invokes headless setter
     chrome_option.headless = headless
     chrome_option.add_argument("--window-size=1920x1080")
-    output_file = None
     mysql_helper = mysql_related.MySqlHelper(reuse_connection=True, db_config_dict=db_config_dict)
     should_commit = False
     try:
-        if output:
-            output_file = open(output, 'w+')
-        # clear content of opened file
-        if clear_previous_content and output_file is not None:
-            output_file.seek(0)
-            output_file.truncate()
-
         driver = webdriver.Chrome(options=chrome_option)
         driver.maximize_window()
 
         stocks = logic.get_slickcharts_stock_constituents(driver, stock_collection)
         stocks = [stock[2] for stock in stocks[1:]]
         shuffle(stocks)
-        need_retry = scrape_stocks(stocks, mysql_helper, driver)
+        need_retry = scrape_stocks(stocks, mysql_helper, driver, output_prefix)
         shuffle(need_retry)
         logging.info("first retry list : %s", str(need_retry))
-        need_retry = scrape_stocks(need_retry, mysql_helper, driver)
+        need_retry = scrape_stocks(need_retry, mysql_helper, driver, output_prefix)
         shuffle(need_retry)
         logging.info("second retry list : %s", str(need_retry))
-        need_retry = scrape_stocks(need_retry, mysql_helper, driver)
+        need_retry = scrape_stocks(need_retry, mysql_helper, driver, output_prefix)
         logging.info("abort list : %s", str(need_retry))
         should_commit = True
     finally:
-        if output_file is not None:
-            output_file.close()
         mysql_helper.set_reuse_connection(False, should_commit)
 
 
-def scrape_stocks(stocks: List[str], mysql_helper, driver: WebDriver) -> List[str]:
+def scrape_stocks(stocks: List[str], mysql_helper, driver: WebDriver, output_prefix: str = None) -> List[str]:
     mysql_table = "yahoo_fin_statistics"
     logging.info(str(stocks))
     need_retry = set([])
@@ -93,7 +79,6 @@ def scrape_stocks(stocks: List[str], mysql_helper, driver: WebDriver) -> List[st
                     driver.find_element_by_id("quote-market-notice").find_element_by_tag_name("span").text.strip()
                 effective_time_str = quote_market_notice.strip("At close: ").strip("EDT").strip()
                 # sample effective_time: "March 15 4:00PM EDT" or "4:02PM EDT"
-                effective_date_time = None
                 try:
                     effective_date_time = \
                         datetime.strptime(effective_time_str, "%B %d %I:%M%p").replace(datetime.now().year)
@@ -118,10 +103,8 @@ def scrape_stocks(stocks: List[str], mysql_helper, driver: WebDriver) -> List[st
                 break
             except (NoSuchElementException, StaleElementReferenceException) as e:
                 logging.error("caught %s in %d, url: %s", str(type(e)), attempt, url)
-                # logging.error("output all html: \n%s", driver.page_source)
-                utility.append_to_file(
-                    os.path.join(constants.test_resources, "error_{}.txt".format(stock)),
-                    driver.page_source)
+                if output_prefix is not None:
+                    utility.append_to_file(output_prefix + "_{}.txt".format(stock), driver.page_source)
                 if attempt == 2:
                     need_retry.add(stock)
                 continue

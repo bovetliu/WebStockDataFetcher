@@ -39,7 +39,7 @@ CHARACTER SET utf8;
 
 
 -- store data scraped from yahoo finance statistics
-CREATE TABLE yahoo_fin_statistics (
+CREATE TABLE IF NOT EXISTS yahoo_fin_statistics (
   -- Valuation Measures
   id BIGINT NOT NULL AUTO_INCREMENT,
   market_cap DOUBLE NULL,
