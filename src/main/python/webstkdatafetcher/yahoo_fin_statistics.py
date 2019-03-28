@@ -20,28 +20,29 @@ from webstkdatafetcher.data_connection import mysql_related
 
 def start_scraping_yahoo_fin_statistics(output_prefix: str = None, headless: bool = False,
                                         db_config_dict: dict = None,
-                                        stock_collection: str = 'sp500'):
+                                        stock_list: List[str] = None):
     """
     :param output_prefix, each error page source will be output to {output_prefix}_{stock}.txt
     :param headless:
     :param db_config_dict:
-    :param stock_collection: sp500, or nasdaq100, or dowjones
+    :param stock_list: a list of stock symbols, for example ["BA", "LMT"]
     :return:
     """
+    if not isinstance(stock_list, list):
+        raise TypeError("stock_list must a list of stock symbols.")
+    if len(stock_list) == 0:
+        raise ValueError("stock_list cannot be an empty array.")
     chrome_option = webdriver.ChromeOptions()
     # invokes headless setter
     chrome_option.headless = headless
     chrome_option.add_argument("--window-size=1920x1080")
     mysql_helper = mysql_related.MySqlHelper(reuse_connection=True, db_config_dict=db_config_dict)
     should_commit = False
+    driver = None
     try:
         driver = webdriver.Chrome(options=chrome_option)
         driver.maximize_window()
-
-        stocks = logic.get_slickcharts_stock_constituents(driver, stock_collection)
-        stocks = [stock[2] for stock in stocks[1:]]
-        shuffle(stocks)
-        need_retry = scrape_stocks(stocks, mysql_helper, driver, output_prefix)
+        need_retry = scrape_stocks(stock_list, mysql_helper, driver, output_prefix)
         shuffle(need_retry)
         logging.info("first retry list : %s", str(need_retry))
         need_retry = scrape_stocks(need_retry, mysql_helper, driver, output_prefix)
@@ -52,6 +53,8 @@ def start_scraping_yahoo_fin_statistics(output_prefix: str = None, headless: boo
         should_commit = True
     finally:
         mysql_helper.set_reuse_connection(False, should_commit)
+        if driver is not None:
+            driver.close()
 
 
 def scrape_stocks(stocks: List[str], mysql_helper, driver: WebDriver, output_prefix: str = None) -> List[str]:

@@ -26,7 +26,20 @@ class TestYahooFinStatisticsModule(unittest.TestCase):
                             stream=sys.stdout)
 
     def test_start_scraping_yahoo_fin_statistics(self):
-        yahoo_fin_statistics.start_scraping_yahoo_fin_statistics(None, True, None, "sp500")
+        driver = None
+        chrome_option = webdriver.ChromeOptions()
+        # invokes headless setter
+        chrome_option.headless = True
+        chrome_option.add_argument("--window-size=1920x1080")
+        try:
+            driver = webdriver.Chrome(options=chrome_option)
+            driver.maximize_window()
+            stocks = [stock_record[2] for stock_record in logic.get_slickcharts_stock_constituents(driver, "sp500")[1:]]
+        finally:
+            if driver is not None:
+                driver.close()
+        yahoo_fin_statistics.start_scraping_yahoo_fin_statistics(None, True, None, stocks[0: len(stocks) // 2])
+        yahoo_fin_statistics.start_scraping_yahoo_fin_statistics(None, True, None, stocks[len(stocks) // 2:])
 
     def test_extract_info_from_stat_html(self):
         test_html = """

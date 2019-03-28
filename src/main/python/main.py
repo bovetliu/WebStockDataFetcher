@@ -6,6 +6,7 @@ from webstkdatafetcher.data_connection import mysql_related
 from os.path import join
 import logging
 import sys
+from selenium import webdriver
 
 
 if __name__ == "__main__":
@@ -63,7 +64,23 @@ if __name__ == "__main__":
         mysql_helper = mysql_related.MySqlHelper(db_config_dict=db_config_dict)
         logic.deduplicate(mysql_helper)
     elif usecase.startswith('yahoo_statistics'):
-        yahoo_fin_statistics.start_scraping_yahoo_fin_statistics(None, True, db_config_dict, "sp500")
+        driver = None
+        chrome_option = webdriver.ChromeOptions()
+        # invokes headless setter
+        chrome_option.headless = True
+        chrome_option.add_argument("--window-size=1920x1080")
+        try:
+            driver = webdriver.Chrome(options=chrome_option)
+            driver.maximize_window()
+            stocks = [stock_record[2] for stock_record in logic.get_slickcharts_stock_constituents(driver, "sp500")[1:]]
+        finally:
+            if driver is not None:
+                driver.close()
+        yahoo_fin_statistics.start_scraping_yahoo_fin_statistics(
+            None, True, db_config_dict, stocks[0: len(stocks) // 2])
+        yahoo_fin_statistics.start_scraping_yahoo_fin_statistics(
+            None, True, db_config_dict, stocks[len(stocks) // 2:])
+
     elif usecase == 'db_initialize':
         pass
     else:
