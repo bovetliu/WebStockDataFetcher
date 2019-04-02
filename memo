@@ -4,6 +4,7 @@
 
 ./one_step_run.sh scrapezacks_to_remote portfolio shutdown_after_execution
 
+./one_step_run.sh yahoo_statistics_to_remote portfolio shutdown_after_execution
 ./one_step_run.sh yahoo_statistics portfolio shutdown_after_execution
 
 # 18.224.147.139 has crontab job
@@ -12,12 +13,11 @@ ssh -i /home/boweiliu/scripts/ib.pem ubuntu@18.224.147.139
 chrome running in aws ec2: 69.0.3497.100-1
 
 # download logs
-
 scp -i /home/boweiliu/scripts/ib.pem ubuntu@18.224.147.139:/home/ubuntu/logs/scrapezacks/2018_10_15*.log ~/workrepo/WebStockDataFetcherAid/remotelogs
 
 mkdir -p ~/bin
 cd ~/bin
-wget https://chromedriver.storage.googleapis.com/2.42/chromedriver_linux64.zip
+wget https://chromedriver.storage.googleapis.com/73.0.3683.68/chromedriver_linux64.zip
 unzip ./chromedriver_linux64.zip
 rm ./chromedriver_linux64.zip
 mkdir -p ~/workrepo

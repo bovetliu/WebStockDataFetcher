@@ -80,7 +80,7 @@ def scrape_stocks(stocks: List[str], mysql_helper, driver: WebDriver, output_pre
 
                 quote_market_notice = \
                     driver.find_element_by_id("quote-market-notice").find_element_by_tag_name("span").text.strip()
-                effective_time_str = quote_market_notice.strip("At close: ").strip("EDT").strip()
+                effective_time_str = quote_market_notice[len("At close: "):-len("EDT")].strip()
                 # sample effective_time: "March 15 4:00PM EDT" or "4:02PM EDT"
                 try:
                     effective_date_time = \
