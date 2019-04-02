@@ -2,7 +2,9 @@
 
 ./one_step_run.sh scrapezacks_to_remote
 
-./one_step_run.sh scrapezacks_to_remote zacks_from_ec2 shutdown_after_execution
+./one_step_run.sh scrapezacks_to_remote portfolio shutdown_after_execution
+
+./one_step_run.sh yahoo_statistics portfolio shutdown_after_execution
 
 # 18.224.147.139 has crontab job
 # @reboot cd /home/ubuntu/workrepo/WebStockDataFetcher && sleep 60 && ./one_step_run.sh scrapezacks_to_remote zacks_from_ec2 shutdown_after_execution

@@ -11,7 +11,7 @@ if [ ! -d "./data" ]; then
   mkdir ./data
 fi
 
-if [ ! -f ./credentials ]; then
+if [ ! -f ./credentials ] && [[ $1 -eq "scrapezacks*" ]]; then
     echo "./credentials file is not found"
     exit 9
 fi
