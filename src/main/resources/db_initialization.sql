@@ -97,6 +97,15 @@ CREATE TABLE IF NOT EXISTS yahoo_fin_statistics (
   short_percentage_of_float FLOAT NULL,
   short_percentage_of_shares_outstanding FLOAT NULL,
 
+  -- dividents & splits
+  forward_annual_dividend_rate FLOAT NULL,
+  forward_annual_dividend_yield FLOAT NULL,
+  trailing_annual_dividend_rate FLOAT NULL,
+  trailing_annual_dividend_yield FLOAT NULL,
+  payout_ratio FLOAT NULL,
+  divident_date DATE NULL,
+  ex_dividend_date DATE NULL,
+
   -- Record Date and Symbol
   record_date DATE NOT NULL,
   symbol VARCHAR(10) NOT NULL,

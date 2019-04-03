@@ -70,6 +70,15 @@ INNER JOIN portfolio_operations t2
 ALTER TABLE portfolio_operations
   ADD COLUMN price_at_close FLOAT NULL AFTER uniqueness;
 
+ALTER TABLE yahoo_fin_statistics
+  ADD COLUMN forward_annual_dividend_rate FLOAT NULL AFTER short_percentage_of_shares_outstanding,
+  ADD COLUMN forward_annual_dividend_yield FLOAT NULL AFTER forward_annual_dividend_rate,
+  ADD COLUMN trailing_annual_dividend_rate FLOAT NULL AFTER forward_annual_dividend_yield,
+  ADD COLUMN trailing_annual_dividend_yield FLOAT NULL AFTER trailing_annual_dividend_rate,
+  ADD COLUMN payout_ratio FLOAT NULL AFTER trailing_annual_dividend_yield,
+  ADD COLUMN divident_date DATE NULL AFTER payout_ratio,
+  ADD COLUMN ex_dividend_date DATE NULL AFTER divident_date;
+
 
 ALTER TABLE portfolio_operations
   MODIFY COLUMN type VARCHAR(15) NOT NULL;

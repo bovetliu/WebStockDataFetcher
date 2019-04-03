@@ -14,7 +14,7 @@ from selenium.common.exceptions import NoSuchElementException, StaleElementRefer
 from bs4 import BeautifulSoup
 from selenium.webdriver.remote.webdriver import WebDriver
 
-from webstkdatafetcher import utility, constants, logic
+from webstkdatafetcher import utility, constants
 from webstkdatafetcher.data_connection import mysql_related
 
 
@@ -279,6 +279,15 @@ def convert_to_db_ready(scraped_data: Dict, symbol: str, record_date):
         "short_ratio": short_data["Short Ratio"],
         "short_percentage_of_float": short_data["Short % of Float"],
         "short_percentage_of_shares_outstanding": short_data["Short % of Shares Outstanding"],
+
+        # dividents & splits
+        "forward_annual_dividend_rate": scraped_data["Forward Annual Dividend Rate"],
+        "forward_annual_dividend_yield": scraped_data["Forward Annual Dividend Yield"],
+        "trailing_annual_dividend_rate": scraped_data["Trailing Annual Dividend Rate"],
+        "trailing_annual_dividend_yield": scraped_data["Trailing Annual Dividend Yield"],
+        "payout_ratio": scraped_data["Payout Ratio"],
+        "divident_date": scraped_data["Dividend Date"],
+        "ex_dividend_date": scraped_data["Ex-Dividend Date"],
 
         # Record Date
         "record_date": record_date.strftime("%Y-%m-%d") if isinstance(record_date, date) else record_date,
