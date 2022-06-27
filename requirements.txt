@@ -1,5 +1,5 @@
 beautifulsoup4==4.6.3
-mysql-connector-python==8.0.12
+mysql-connector-python==8.0.14
 protobuf==3.6.1
 selenium==3.14.0
 six==1.11.0
